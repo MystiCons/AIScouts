@@ -192,6 +192,8 @@ def read_config(path):
 def main():
     if not os.path.exists(config_file_path):
         create_config(config_file_path)
+        print("Creating config file, run script again after you've configured it from config.ini")
+        exit(0)
     read_config(config_file_path)
     download_images()
         
