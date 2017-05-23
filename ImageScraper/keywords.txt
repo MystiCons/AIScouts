@@ -1,1 +1,7 @@
 dog
+cat
+coffee cup
+computer
+mouse
+computer mouse
+

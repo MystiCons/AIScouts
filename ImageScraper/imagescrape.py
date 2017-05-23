@@ -94,10 +94,17 @@ def download_images():
         j = 0
         while j<len(keywords):
             pure_keyword = keywords[j].replace(' ','%20')
-            url = 'https://www.google.com/search?q=' + search + pure_keyword + '&espv=2&biw=1366&bih=667&site=webhp&source=lnms&tbm=isch&sa=X&ei=XosDVaCXD8TasATItgE&ved=0CAcQ_AUoAg'
-            raw_html =  (download_page(url))
+            #url = 'https://www.google.com/search?q=' + search + pure_keyword + '&espv=2&biw=1366&bih=667&site=webhp&source=lnms&tbm=isch&sa=X&ei=XosDVaCXD8TasATItgE&ved=0CAcQ_AUoAg'
+            #url3 = "http://www.bing.com/images/search?sp=-1&pq=" + search + pure_keyword +"&sc=8-2&sk=&q=cat&qft=+filterui:imagesize-medium&FORM=R5IR1"
+            #url4 = "http://www.bing.com/images/search?sp=-1&pq=" + search + pure_keyword + "&sc=8-2&sk=&q=cat&qft=+filterui:imagesize-small&FORM=R5IR1"
+            url3 = "https://www.bing.com/images/search?sp=-1&pq=cat&sc=8-2&sk=&q=cat&qft=+filterui:imagesize-medium&FORM=R5IR1"
+            #raw_html =  (download_page(url))
+            raw_html3 =  (download_page(url3))
+            #raw_html4 =  (download_page(url4))
             time.sleep(0.1)
-            items[search_keyword[i]] = items[search_keyword[i]] + (_images_get_all_items(raw_html))
+            #items[search_keyword[i]] = items[search_keyword[i]] + (_images_get_all_items(raw_html))
+            items[search_keyword[i]] = items[search_keyword[i]] + (_images_get_all_items(raw_html3))
+            #items[search_keyword[i]] = items[search_keyword[i]] + (_images_get_all_items(raw_html4))
             j = j + 1
         #print ("Image Links = "+str(items))
         print ("Total Image Links = "+str(len(items)))
@@ -180,6 +187,8 @@ def read_config(path):
     config.read(config_file_path)
     keyword_file = config.get("Settings", "keywords_path")
     max_images = int(config.get("Settings", "max_images"))
+    if(max_images == 0):
+        max_images = 999
     convert_size = int(config.get("Settings", "convert_size"))
     images_folder_path = config.get("Settings",  "images_folder_path") 
     if not images_folder_path.endswith('/'):
