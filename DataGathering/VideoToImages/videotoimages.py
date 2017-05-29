@@ -38,6 +38,7 @@ def load_videos(input_folder):
 
 def videos_to_pictures(output_folder,  vids):
     count = 1
+    video_count = 0;
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     os.chdir(output_folder)
@@ -48,9 +49,9 @@ def videos_to_pictures(output_folder,  vids):
         dir = os.listdir('.')
         count = len(dir)
         for vid in value:
-            print(str(value))
+            video_count += 1
+            print(video_count + " videos processed")
             while True:
-                print('processing image ' + str(count))
                 success,  image = vid.read()
                 if(cv2.waitKey(10) == 27 or success == False):
                     break;
