@@ -36,7 +36,7 @@ while (counter < 100):
 
 print("Done")
 
-
+os.chdir("..")    
 
 
 
