@@ -1,16 +1,15 @@
 import numpy as np
 import os
 import tflearn
-import tensorflow as tf
 import cv2
 import matplotlib.pyplot as plt
+import time
 from tflearn.layers.conv import conv_2d, max_pool_2d
 from tflearn.layers.core import input_data,  dropout,  fully_connected
 from tflearn.layers.estimator import regression
 
 from tqdm import tqdm
 from random import shuffle
-
 
 IS_PARK_DIR = './train_data/true/'
 IS_NOT_PARK_DIR = './train_data/false/'
@@ -57,6 +56,12 @@ def train_network(train_data):
     convnet = conv_2d(convnet,  64, 2, activation='relu')
     convnet = max_pool_2d(convnet, 2)
     
+    convnet = conv_2d(convnet,  32, 2, activation='relu')
+    convnet = max_pool_2d(convnet, 2)
+    
+    convnet = conv_2d(convnet,  64, 2, activation='relu')
+    convnet = max_pool_2d(convnet, 2)
+    
     convnet = fully_connected(convnet,  1024,  activation='relu')
     convnet = dropout(convnet,  0.8)
     
@@ -68,19 +73,22 @@ def train_network(train_data):
     if(os.path.exists(MODEL_NAME + '.meta')):
         model.load(MODEL_NAME)
         print('model loaded!')
-    
-    train = train_data[:-500]
-    test = train_data[-500:]
+    else:
         
-    X = np.array([i[0] for i in train]).reshape(-1,  IMG_SIZE,  IMG_SIZE,  1)
-    Y = [i[1] for i in train]
-    
-    test_X = np.array([i[0] for i in test]).reshape(-1,  IMG_SIZE,  IMG_SIZE,  1)
-    test_Y = [i[1] for i in test]
-    
-    model.fit({'input': X},  {'targets': Y}, 5,  ({'input': test_X}, {'targets': test_Y}),  500,  True,  MODEL_NAME)
-    
-    model.save(MODEL_NAME)
+        test_ratio = int(0.8*len(train_data))
+        train_ratio = int(0.2*len(train_data))
+        train = train_data[:train_ratio]
+        test = train_data[-test_ratio:]
+            
+        X = np.array([i[0] for i in train]).reshape(-1,  IMG_SIZE,  IMG_SIZE,  1)
+        Y = [i[1] for i in train]
+        
+        test_X = np.array([i[0] for i in test]).reshape(-1,  IMG_SIZE,  IMG_SIZE,  1)
+        test_Y = [i[1] for i in test]
+        
+        model.fit({'input': X},  {'targets': Y}, 5,  ({'input': test_X}, {'targets': test_Y}),  100,  True,  MODEL_NAME)
+        
+        model.save(MODEL_NAME)
     
     return model
     
@@ -117,8 +125,8 @@ def main():
         orig = img_data
         data = img_data.reshape(IMG_SIZE,  IMG_SIZE,  1)
         model_out = model.predict([data])[0]
-        if np.argmax(model_out) == 1: str_label='Not a park'
-        else: str_label = 'Is a park'
+        if np.argmax(model_out) == 1: str_label='No'
+        else: str_label = 'Yes'
         y.imshow(orig,  cmap='gray')
         plt.title(str_label)
         y.axes.get_xaxis().set_visible(False)
