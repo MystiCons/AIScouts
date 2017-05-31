@@ -3,7 +3,6 @@ import os
 import tflearn
 import cv2
 import matplotlib.pyplot as plt
-import time
 from tflearn.layers.conv import conv_2d, max_pool_2d
 from tflearn.layers.core import input_data,  dropout,  fully_connected
 from tflearn.layers.estimator import regression
@@ -15,11 +14,12 @@ IS_PARK_DIR = './train_data/true/'
 IS_NOT_PARK_DIR = './train_data/false/'
 TEST_DIR = './test_data/'
 MODEL_NAME = 'test'
-IMG_SIZE = 32
+IMG_SIZE = 128
 LR = 1e-4
 
 is_parking_place_imgs = []
 is_not_parking_place_imgs = []
+
 
 def load_training_data():
     training_data = []
@@ -32,7 +32,7 @@ def load_training_data():
         training_data.append([np.array(img),  np.array(label)])
         
     for img in tqdm(os.listdir(IS_NOT_PARK_DIR)):
-        label = [0,1]
+        label = [0, 1]
         path = os.path.join(IS_NOT_PARK_DIR,  img)
         img = cv2.resize(cv2.imread(path,  cv2.IMREAD_GRAYSCALE),  (IMG_SIZE,  IMG_SIZE))
         training_data.append([np.array(img),  np.array(label)])
@@ -40,7 +40,8 @@ def load_training_data():
     shuffle(training_data)
     np.save('train_data.npy',  training_data)
     return training_data
-    
+
+
 def train_network(train_data):
     convnet = input_data(shape=[None, IMG_SIZE,  IMG_SIZE,  1],  name='input')
     
@@ -86,7 +87,7 @@ def train_network(train_data):
         test_X = np.array([i[0] for i in test]).reshape(-1,  IMG_SIZE,  IMG_SIZE,  1)
         test_Y = [i[1] for i in test]
         
-        model.fit({'input': X},  {'targets': Y}, 5,  ({'input': test_X}, {'targets': test_Y}),  100,  True,  MODEL_NAME)
+        model.fit({'input': X},  {'targets': Y}, 10,  ({'input': test_X}, {'targets': test_Y}),  100,  True,  MODEL_NAME)
         
         model.save(MODEL_NAME)
     
@@ -136,4 +137,3 @@ def main():
     
 if __name__ == '__main__':
     main()
-    
