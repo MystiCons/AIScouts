@@ -20,7 +20,7 @@ and then saves them in specified folder.
 **ParkingPlace** folder also includes two separate python scripts scripts:
 * **ImageRecognition** script is for cutting images into smaller images,
 which then can be used as learning material (for Tensorflow).
-* **TFTrainIsParkingPlace** script is used to teach Tensorflow to detect,
+* **TFTrainSinglePark** script is used to teach Tensorflow to detect,
 if given image is a parking spot or if it isn't.
 
 
