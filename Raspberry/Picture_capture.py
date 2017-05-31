@@ -1,11 +1,12 @@
 import os
-
 import picamera
 from time import sleep
 
 
 folder_name = input("Folder name: ")
 current_folder = "./"
+cap_amount = 0
+cap_amount = +int(input("How many pictures: "))
 
 
 
@@ -26,9 +27,9 @@ makedir()
 camera = picamera.PiCamera()
 camera.resolution = (1920, 1080)
 camera.framerate = 24
-counter = 0
+counter = 1
 
-while (counter < 100):
+while (counter <= cap_amount):
     img_name = str(counter)+'.png'
     camera.capture(img_name)
     counter = counter + 1
