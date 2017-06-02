@@ -1,5 +1,6 @@
 import numpy as np
-import os, sys
+import os
+import sys
 import tflearn
 import cv2
 import matplotlib.pyplot as plt
@@ -19,6 +20,7 @@ IMG_SIZE = 128
 LR = 1e-4
 layers = 3
 epochs = 10
+visualize = False
 
 is_parking_place_imgs = []
 is_not_parking_place_imgs = []
@@ -80,7 +82,7 @@ def train_network(train_data):
         test_X = np.array([i[0] for i in test]).reshape(-1,  IMG_SIZE,  IMG_SIZE,  1)
         test_Y = [i[1] for i in test]
         
-        model.fit({'input': X},  {'targets': Y}, epochs,  ({'input': test_X}, {'targets': test_Y}),  100,  True,  MODEL_NAME)
+        model.fit({'input': X},  {'targets': Y}, epochs,  ({'input': test_X}, {'targets': test_Y}), show_metric=True, shuffle=False,  snapshot_epoch=True,  run_id=MODEL_NAME)
 
         if not os.path.exists('models'):
             os.makedirs('models')
@@ -102,17 +104,44 @@ def load_testing_data():
         testing_data.append([np.array(img),  img_label])
     np.save('test_data.npy',  testing_data)
     return testing_data
-    
+
+
+def test_and_visualize(model):
+    if (os.path.isfile('test_data.npy')):
+        test_data = np.load('test_data.npy')
+    else:
+        test_data = load_testing_data()
+
+    fig = plt.figure()
+
+    for label, data in enumerate(test_data[:12]):
+        img_label = data[1]
+        img_data = data[0]
+        y = fig.add_subplot(3, 4, label + 1)
+        orig = img_data
+        data = img_data.reshape(IMG_SIZE, IMG_SIZE, 1)
+        model_out = model.predict([data])[0]
+        if np.argmax(model_out) == 1:
+            str_label = 'No'
+        else:
+            str_label = 'Yes'
+        y.imshow(orig, cmap='gray')
+        plt.title(str_label)
+        y.axes.get_xaxis().set_visible(False)
+        y.axes.get_yaxis().set_visible(False)
+    plt.show()
+
 
 def main(argv):
     global LR
     global layers
     global MODEL_NAME
     global epochs
+    global visualize
     try:
-        opts, args = getopt.getopt(argv, "hl:r:m:e:", ["layers", "rate", "model", "epochs"])
+        opts, args = getopt.getopt(argv, "hl:r:m:e:v:", ["layers", "rate", "model", "epochs", "visualize"])
     except getopt.GetoptError:
-        print('Usage: -l <layers count> -r <learning rate> -m <output model name> -e <epochs>')
+        print('Usage: -l <layers count> -r <learning rate> -m <output model name> -e <epochs> -v <visualize(True/False)>')
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
@@ -125,6 +154,11 @@ def main(argv):
             MODEL_NAME = arg
         elif opt in ('-e', '--epochs'):
             epochs = int(arg)
+        elif opt in ('-v', '--visualize'):
+            if arg.lower() == 'true':
+                visualize = True
+            else:
+                visualize = False
 
     if(os.path.isfile('train_data.npy')):
         train_data = np.load('train_data.npy')
@@ -132,31 +166,10 @@ def main(argv):
         train_data = load_training_data()
 
     model = train_network(train_data)
-    ''' 
-    if(os.path.isfile('test_data.npy')):
-        test_data = np.load('test_data.npy')
-    else:
-        test_data = load_testing_data()
 
-   
-    
-   fig = plt.figure()
-    
-    for label,  data in enumerate(test_data[:12]):
-        img_label = data[1]
-        img_data = data[0]
-        y = fig.add_subplot(3, 4, label+1)
-        orig = img_data
-        data = img_data.reshape(IMG_SIZE,  IMG_SIZE,  1)
-        model_out = model.predict([data])[0]
-        if np.argmax(model_out) == 1: str_label='No'
-        else: str_label = 'Yes'
-        y.imshow(orig,  cmap='gray')
-        plt.title(str_label)
-        y.axes.get_xaxis().set_visible(False)
-        y.axes.get_yaxis().set_visible(False)
-    plt.show()
-    
- '''
+    if visualize:
+        test_and_visualize(model)
+
+
 if __name__ == '__main__':
     main(sys.argv[1:])
