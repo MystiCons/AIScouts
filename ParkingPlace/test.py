@@ -2,6 +2,7 @@ import os
 import math
 
 
+
 '''
 4
 5
@@ -29,10 +30,12 @@ Layer_iterations = 1
 epoch_iterations = 1
 start_epochs = 20
 epochs = 0
-start_rate = 0.0001
+start_rate = 0.001
 start_layers = 4
 image_file = '1.jpg'
-crop_size = 150
+train = False
+test = True
+crop_size = 180
 visualize = True
 
 
@@ -45,12 +48,12 @@ for i in range(0, LR_iterations):
             model_name = 'L' + str(layers) + 'R' + str(rate) + 'E' + str(epochs)
             print('Current iteration: ' + ' LR: ' + str(rate) + ', Layers: ' + str(layers) + ', Epochs: ' + str(
                 epochs) + ', crop_size: ' + str(crop_size) + ' image: ' + image_file + ' model name: ' + model_name)
-
-            os.system("python3 TFTrainSinglePark.py -l " + str(layers) + " -r " + str(
-                rate) + " -m " + model_name + " -e " + str(epochs) + ' -v ' + str(visualize))
-
-            os.system("python3 ImageRecognition.py -i " + image_file + " -c " + str(
-                crop_size) + " -m " + model_name + " -r " + str(rate) + " -l " + str(layers) + ' -v ' + str(visualize))
+            if train:
+                result = os.system("python3 TFTrainSinglePark.py -l " + str(layers) + " -r " + str(
+                    rate) + " -m " + model_name + " -e " + str(epochs) + ' -v ' + str(visualize))
+            if test:
+                os.system("python3 ImageRecognition.py -i " + image_file + " -c " + str(
+                    crop_size) + " -m " + model_name + " -r " + str(rate) + " -l " + str(layers) + ' -v ' + str(visualize))
 
 
 

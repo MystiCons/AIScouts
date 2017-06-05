@@ -8,18 +8,13 @@ from tflearn.layers.conv import conv_2d, max_pool_2d
 from tflearn.layers.core import input_data,  dropout,  fully_connected
 from tflearn.layers.estimator import regression
 
-
+DATA_FOLDER = '/media/cf2017/levy/tensorflow/images/'
 crop_size_width = 128
 crop_size_height = 128
-image_aspect = [16, 9]
 image_width = 0
 image_height = 0
 image = None
-image_edited = None
 move_ratio = 16
-auto_config_search_accuracy = 0.01
-auto_config_search_start_accuracy = 0.14
-inverted_aspect = 'n'
 model_name = ''
 model = None
 count2 = 0
@@ -28,6 +23,8 @@ TF_Image_size = 128
 layers = 0
 LR = 0
 visualize = False
+points_of_interest = []
+
 
 
 def load_tfmodel(model_n):
@@ -49,11 +46,11 @@ def load_tfmodel(model_n):
 
     model = tflearn.DNN(convnet, tensorboard_dir='log')
 
-    if os.path.exists(model_n + '.meta'):
-        model.load(model_n)
+    if os.path.exists(DATA_FOLDER + model_n + '.meta'):
+        model.load(DATA_FOLDER + model_n)
         print('model loaded!')
     else:
-        print('model not found! ' + model_n)
+        print('model not found! ' + DATA_FOLDER + model_n)
         sys.exit(2)
 
 
@@ -61,18 +58,65 @@ def predict(crop):
     img = cv2.resize(crop, (TF_Image_size, TF_Image_size))
     data = img.reshape(TF_Image_size, TF_Image_size, 1)
     model_out = model.predict([data])[0]
-
     if np.argmax(model_out) == 0:
         return True
     return False
 
 
-def draw_heatmap():
+def validate_parking_place(curr_pos, orig_img, edit_image, move_visualize_image):
+    found = 0
+    curr_position2 = curr_pos.copy()
+    not_found_y = 0
+    edit_image2 = edit_image.copy()
+    for y in range(int(crop_size_height / 3)):
+        if curr_position2[1] + crop_size_height > image_height:
+            break
+        not_found_x = 0
+        for x in range(int(crop_size_width / 3)):
+            curr_position2[0] = int(curr_position2[0] + 2)
+            if curr_position2[0] + crop_size_width > image_width:
+                break
+            crop = orig_img[curr_position2[1]:curr_position2[1] + crop_size_height,
+                   curr_position2[0]:curr_position2[0] + crop_size_width]
+            if predict(crop):
+                found += 1
+                cv2.circle(edit_image2, (
+                    int(curr_position2[0] + crop_size_width / 2), int(curr_position2[1] + crop_size_height / 2)),
+                           2,
+                           (255, 0, 0), -1)
+                not_found_x = 0
+            else:
+                not_found_x += 1
+            if not_found_x > 10:
+                break
+            if visualize:
+                cv2.rectangle(move_visualize_image,
+                              (curr_position2[0], curr_position2[1]),
+                              (curr_position2[0] + crop_size_width,
+                               curr_position2[1] + crop_size_height),
+                              (255, 0, 0),
+                              2)
+                cv2.imshow('main', move_visualize_image)
+                cv2.waitKey(1)
+                move_visualize_image = edit_image2.copy()
+        if not_found_x > 10:
+            not_found_y += 1
+        else:
+            not_found_y = 0
+        if not_found_y > 5:
+            break
+        curr_position2[1] += 2
+        curr_position2[0] = curr_pos[0]
+
+    if found / ((crop_size_height / 2) * (crop_size_width / 2)) > 0.5:
+        return True
+    else:
+        return False
+
+
+def draw_heatmap2():
     global crop_size_width
     global crop_size_height
-    global auto_config_search_accuracy
-    global auto_config_search_start_accuracy
-    global inverted_aspect
     global image
     global model_name
     global visualize
@@ -90,16 +134,20 @@ def draw_heatmap():
     while True:
         if curr_position[1] + crop_size_height >= image_height:
             break
-        else:
-            curr_position[1] = curr_position[1] + move_ratio_height
-            curr_position[0] = 0
         while True:
             crop = image2[curr_position[1]:curr_position[1] + crop_size_height, curr_position[0]:curr_position[0] + crop_size_width]
             if predict(crop):
-                cv2.circle(image, (int(curr_position[0] + crop_size_width / 2), int(curr_position[1] + crop_size_height / 2)),
-                              2,
-                              (255, 0, 0), -1)
-                curr_position[0] = int(curr_position[0] + move_ratio_width)
+                if validate_parking_place(curr_position, image2, image, visualize_img):
+                    cv2.rectangle(image,
+                                  (curr_position[0], curr_position[1]),
+                                  (curr_position[0] + crop_size_width,
+                                   curr_position[1] + crop_size_height),
+                                  (255, 0, 0),
+                                  2)
+                    curr_position[0] = int(curr_position[0] + crop_size_width / 3)
+                else:
+                    curr_position[0] = int(curr_position[0] + move_ratio_width)
+
             else:
                 curr_position[0] = int(curr_position[0] + move_ratio_width)
             if visualize:
@@ -114,6 +162,8 @@ def draw_heatmap():
                 visualize_img = image.copy()
             if curr_position[0] + crop_size_width >= image_width:
                 break
+        curr_position[1] = curr_position[1] + move_ratio_height
+        curr_position[0] = 0
 
     if not os.path.exists('heatmaps'):
         os.makedirs('heatmaps')
@@ -121,6 +171,73 @@ def draw_heatmap():
     heatmap_img_file_name = (model_name + 'C' + str(crop_size_width) + '.jpg')
     cv2.imwrite(heatmap_img_file_name, image)
 
+    os.chdir('..')
+
+
+
+def draw_heatmap():
+    global crop_size_width
+    global crop_size_height
+    global image
+    global model_name
+    global visualize
+    global curr_position
+    visualize_img = None
+    if visualize:
+        visualize_img = image.copy()
+    crop_size_height = crop_size_width
+    curr_position = [0, 0]
+    move_ratio_width = int(crop_size_width * 0.1)
+    move_ratio_height = int(crop_size_height * 0.1)
+    image2 = image.copy()
+    crop_size_height -= 50
+    crop_size_width -= 50
+    shift = [0, 0]
+    if visualize:
+        cv2.imshow('main', image)
+        cv2.waitKey(1)
+    for i in range(10):
+        while True:
+            if curr_position[1] + crop_size_height >= image_height:
+                break
+            else:
+                curr_position[1] = curr_position[1] + move_ratio_height
+                curr_position[0] = 0
+            while True:
+                crop = image2[curr_position[1]:curr_position[1] + crop_size_height, curr_position[0]:curr_position[0] + crop_size_width]
+                if predict(crop):
+                    cv2.circle(image, (int(curr_position[0] + crop_size_width / 2), int(curr_position[1] + crop_size_height / 2)),
+                                  2,
+                                  (255, 0, 0), -1)
+                    points_of_interest.append(curr_position)
+                    curr_position[0] = int(curr_position[0] + move_ratio_width)
+                else:
+                    curr_position[0] = int(curr_position[0] + move_ratio_width)
+                if visualize:
+                    cv2.rectangle(visualize_img,
+                                  (curr_position[0], curr_position[1]),
+                                  (curr_position[0] + crop_size_width,
+                                   curr_position[1] + crop_size_height),
+                                  (255, 0, 0),
+                                  2)
+                    cv2.imshow('main', visualize_img)
+                    cv2.waitKey(1)
+                    visualize_img = image.copy()
+                if curr_position[0] + crop_size_width >= image_width:
+                    break
+        shift[0] += 5
+        shift[1] += 5
+        crop_size_width += 10
+        crop_size_height += 10
+        curr_position = [shift[0], shift[1]]
+
+    if not os.path.exists('heatmaps'):
+        os.makedirs('heatmaps')
+    os.chdir('heatmaps')
+    heatmap_img_file_name = (model_name + 'C' + str(crop_size_width) + '.jpg')
+    cv2.imwrite(heatmap_img_file_name, image)
+    cv2.imshow("main", image)
+    cv2.waitKey()
     os.chdir('..')
 
 
@@ -178,3 +295,4 @@ def main(argv):
 
 if __name__ == '__main__':
     main(sys.argv[1:])
+
