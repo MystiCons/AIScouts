@@ -1,9 +1,12 @@
-from fractions import Fraction
+
 import numpy as np
 import os, sys, getopt
 import tflearn
 import cv2
+import matplotlib.pyplot as plt
 
+from pyclustering.cluster.optics import optics
+from pyclustering.cluster import cluster_visualizer
 from tflearn.layers.conv import conv_2d, max_pool_2d
 from tflearn.layers.core import input_data,  dropout,  fully_connected
 from tflearn.layers.estimator import regression
@@ -23,7 +26,9 @@ TF_Image_size = 128
 layers = 0
 LR = 0
 visualize = False
-points_of_interest = []
+POIX = []
+POIY = []
+
 
 
 
@@ -182,6 +187,8 @@ def draw_heatmap():
     global model_name
     global visualize
     global curr_position
+    global POIX
+    global POIY
     visualize_img = None
     if visualize:
         visualize_img = image.copy()
@@ -189,14 +196,13 @@ def draw_heatmap():
     curr_position = [0, 0]
     move_ratio_width = int(crop_size_width * 0.1)
     move_ratio_height = int(crop_size_height * 0.1)
+
     image2 = image.copy()
-    crop_size_height -= 50
-    crop_size_width -= 50
     shift = [0, 0]
     if visualize:
         cv2.imshow('main', image)
         cv2.waitKey(1)
-    for i in range(10):
+    for i in range(1):
         while True:
             if curr_position[1] + crop_size_height >= image_height:
                 break
@@ -206,10 +212,11 @@ def draw_heatmap():
             while True:
                 crop = image2[curr_position[1]:curr_position[1] + crop_size_height, curr_position[0]:curr_position[0] + crop_size_width]
                 if predict(crop):
-                    cv2.circle(image, (int(curr_position[0] + crop_size_width / 2), int(curr_position[1] + crop_size_height / 2)),
-                                  2,
-                                  (255, 0, 0), -1)
-                    points_of_interest.append(curr_position)
+                    #cv2.circle(image, (int(curr_position[0] + crop_size_width / 2), int(curr_position[1] + crop_size_height / 2)),
+                    #              2,
+                    #              (255, 0, 0), -1)
+                    POIX.append(curr_position[0])
+                    POIY.append(curr_position[1])
                     curr_position[0] = int(curr_position[0] + move_ratio_width)
                 else:
                     curr_position[0] = int(curr_position[0] + move_ratio_width)
@@ -236,9 +243,56 @@ def draw_heatmap():
     os.chdir('heatmaps')
     heatmap_img_file_name = (model_name + 'C' + str(crop_size_width) + '.jpg')
     cv2.imwrite(heatmap_img_file_name, image)
+
+    os.chdir('..')
+    clusters = cluster(POIX, POIY)
+    park_mid_points = []
+    for i in range(len(clusters)):
+        avg = 0
+        count = 0
+        for j in clusters[i]:
+            count += 1
+            avg += j
+        park_mid_points.append([int(avg[0] / count), int(avg[1] / count)])
+
+    for i in range(len(park_mid_points)):
+         cv2.circle(image, (park_mid_points[i][0], park_mid_points[i][1]),
+                      2,
+                      (255, 0, 0), -1)
+        #cv2.rectangle(image,
+        #              (park_mid_points[i][0] - int(crop_size_width / 2),
+        #               park_mid_points[i][1] - int(crop_size_height / 2)),
+        #              (park_mid_points[i][0] + int(crop_size_width / 2),
+        #               park_mid_points[i][1] + int(crop_size_height / 2)),
+        #              (255, 0, 0),
+        #              2)
+   # if visualize:
     cv2.imshow("main", image)
     cv2.waitKey()
-    os.chdir('..')
+
+
+def cluster(xs, ys):
+    POI = []
+    for i in range(len(xs)):
+        POI.append([xs[i], ys[i]])
+    POI = np.array(POI)
+
+    optics_instance = optics(POI, 27, 5)
+    optics_instance.process()
+    clusters = optics_instance.get_clusters()
+
+    #if visualize:
+    vis = cluster_visualizer()
+    vis.append_clusters(clusters, POI)
+    vis.show()
+    ret = []
+
+    for i in range(len(clusters)):
+        ret.append([])
+        for j in range(len(clusters[i])):
+            ret[i].append(POI[clusters[i][j]])
+
+    return ret
 
 
 def init(argv):
