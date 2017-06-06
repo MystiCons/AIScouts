@@ -36,7 +36,7 @@ image_file = '1.jpg'
 train = False
 test = True
 crop_size = 180
-visualize = True
+visualize = False
 
 
 for i in range(0, LR_iterations):
