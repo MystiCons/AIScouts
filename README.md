@@ -10,6 +10,7 @@ More information about specific subject is written inside subject's folder.
 **BBControl** includes python scripts to control BB8 robot
 (for the controlling device (e.g. computer) and the end device.)
 
+**CarControl** includes similiar scripts as **BBControl** but it allows controlling of the "robot car".
 
 **DataGathering** folder includes two different python scripts for capturing images.
 * **ImageScraper** asks keyword(s) for images to be downloaded from the Internet,
