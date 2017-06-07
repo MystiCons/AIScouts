@@ -3,6 +3,7 @@ import math
 
 
 
+
 '''
 4
 5
@@ -25,15 +26,15 @@ import math
 #
 
 
-LR_iterations = 1
-Layer_iterations = 1
-epoch_iterations = 1
-start_epochs = 20
+LR_iterations = 4
+Layer_iterations = 4
+epoch_iterations = 4
+start_epochs = 10
 epochs = 0
 start_rate = 0.001
-start_layers = 4
+start_layers = 3
 image_file = '1.jpg'
-train = False
+train = True
 test = True
 crop_size = 180
 visualize = False
