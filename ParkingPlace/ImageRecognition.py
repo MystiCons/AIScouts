@@ -5,7 +5,12 @@ import tflearn
 import cv2
 import matplotlib.pyplot as plt
 
+from sklearn.cluster import MeanShift, estimate_bandwidth
+
+
+from random import randint
 from pyclustering.cluster.optics import optics
+from pyclustering.cluster.kmeans import kmeans
 from pyclustering.cluster import cluster_visualizer
 from tflearn.layers.conv import conv_2d, max_pool_2d
 from tflearn.layers.core import input_data,  dropout,  fully_connected
@@ -212,11 +217,11 @@ def draw_heatmap():
             while True:
                 crop = image2[curr_position[1]:curr_position[1] + crop_size_height, curr_position[0]:curr_position[0] + crop_size_width]
                 if predict(crop):
-                    #cv2.circle(image, (int(curr_position[0] + crop_size_width / 2), int(curr_position[1] + crop_size_height / 2)),
-                    #              2,
-                    #              (255, 0, 0), -1)
-                    POIX.append(curr_position[0])
-                    POIY.append(curr_position[1])
+                    cv2.circle(image, (int(curr_position[0] + crop_size_width / 2), int(curr_position[1] + crop_size_height / 2)),
+                                  2,
+                                  (255, 0, 0), -1)
+                    POIX.append(curr_position[0] + crop_size_width / 2)
+                    POIY.append(curr_position[1] + crop_size_height / 2)
                     curr_position[0] = int(curr_position[0] + move_ratio_width)
                 else:
                     curr_position[0] = int(curr_position[0] + move_ratio_width)
@@ -245,8 +250,10 @@ def draw_heatmap():
     cv2.imwrite(heatmap_img_file_name, image)
 
     os.chdir('..')
-    clusters = cluster(POIX, POIY)
+    clusters = cluster_kmeans(POIX, POIY)
     park_mid_points = []
+    #park_mid_points = cluster_meanshift(POIX, POIY)
+
     for i in range(len(clusters)):
         avg = 0
         count = 0
@@ -255,23 +262,47 @@ def draw_heatmap():
             avg += j
         park_mid_points.append([int(avg[0] / count), int(avg[1] / count)])
 
+    image = image2.copy()
     for i in range(len(park_mid_points)):
          cv2.circle(image, (park_mid_points[i][0], park_mid_points[i][1]),
                       2,
                       (255, 0, 0), -1)
-        #cv2.rectangle(image,
-        #              (park_mid_points[i][0] - int(crop_size_width / 2),
-        #               park_mid_points[i][1] - int(crop_size_height / 2)),
-        #              (park_mid_points[i][0] + int(crop_size_width / 2),
-        #               park_mid_points[i][1] + int(crop_size_height / 2)),
-        #              (255, 0, 0),
-        #              2)
-   # if visualize:
-    cv2.imshow("main", image)
-    cv2.waitKey()
+         #cv2.rectangle(image,
+         #             (park_mid_points[i][0] - int(crop_size_width / 3),
+         #              park_mid_points[i][1] - int(crop_size_height / 2)),
+         #             (park_mid_points[i][0] + int(crop_size_width / 3),
+         #              park_mid_points[i][1] + int(crop_size_height / 2)),
+         #             (255, 0, 0),
+         #             2)
+    if visualize:
+        cv2.imshow("main", image)
+        cv2.waitKey()
+
+    if not os.path.exists('results'):
+        os.makedirs('results')
+    os.chdir('results')
+    cv2.imwrite(model_name + 'C' + str(crop_size_width) + '.jpg', image)
+    os.chdir('..')
+
+def cluster_meanshift(xs, ys):
+    POI = []
+    for i in range(len(xs)):
+        POI.append([xs[i], ys[i]])
+    POI = np.array(POI)
+
+    bw = estimate_bandwidth(POI, quantile=0.085, n_samples=50)
+
+    ms = MeanShift(bw, bin_seeding=True)
+    ms.fit(POI)
+    clusters = ms.cluster_centers_.astype(int)
+    print(len(np.unique(ms.labels_)))
+
+    ret = clusters
+
+    return ret
 
 
-def cluster(xs, ys):
+def cluster_optics(xs, ys):
     POI = []
     for i in range(len(xs)):
         POI.append([xs[i], ys[i]])
@@ -281,10 +312,39 @@ def cluster(xs, ys):
     optics_instance.process()
     clusters = optics_instance.get_clusters()
 
-    #if visualize:
-    vis = cluster_visualizer()
-    vis.append_clusters(clusters, POI)
-    vis.show()
+    if visualize:
+        vis = cluster_visualizer()
+        vis.append_clusters(clusters, POI)
+        vis.show()
+    ret = []
+
+    for i in range(len(clusters)):
+        ret.append([])
+        for j in range(len(clusters[i])):
+            ret[i].append(POI[clusters[i][j]])
+
+    return ret
+
+def cluster_kmeans(xs, ys):
+    POI = []
+    for i in range(len(xs)):
+        POI.append([xs[i], ys[i]])
+    POI = np.array(POI)
+
+    rand = []
+    for i in range(14):
+        r = randint(0, len(POI))
+        rand.append(POI[r])
+
+
+    kmeans_instance = kmeans(POI, rand, 4)
+    kmeans_instance.process()
+    clusters = kmeans_instance.get_clusters()
+
+    if visualize:
+        vis = cluster_visualizer()
+        vis.append_clusters(clusters, POI)
+        vis.show()
     ret = []
 
     for i in range(len(clusters)):
