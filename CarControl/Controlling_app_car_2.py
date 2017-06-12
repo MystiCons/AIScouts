@@ -1,6 +1,6 @@
 
 import socket
-import sys, tty, termios, time
+import sys, tty, termios
 #import RPi.GPIO as GPIO
 from time import sleep
 
@@ -10,7 +10,7 @@ ch = None
 
 #Creating connection
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_address = ('192.168.51.105', 1337)
+server_address = ('192.168.51.139', 1337)
 sock.connect(server_address)
 
 def getch():
