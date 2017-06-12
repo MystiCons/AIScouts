@@ -28,7 +28,8 @@ class Model:
     label_folders = {}
     labels = {}
 
-    def __init__(self, label_folders, data_folder='.',
+
+    def __init__(self, label_folders, data_folder='./',
                    learning_rate=1e-3, img_size=128, layers=3,
                    epochs=10, model_name=''):
         self.label_folders = label_folders
@@ -39,6 +40,12 @@ class Model:
         self.debug = False
         self.model_name = model_name
         self.data_folder = data_folder
+        if not self.data_folder[-1] == '/'
+            self.data_folder += '/'
+
+        for i in range(len(self.label_folders)):
+            if not self.label_folders[i][0] == '/':
+                self.label_folders[i] = '/' + self.label_folders[i]
 
         convnet = input_data(shape=[None, self.img_size, self.img_size, 1], name='input')
 
@@ -64,19 +71,27 @@ class Model:
     # Loads a saved instance of class Model
     @classmethod
     def load_model(cls, path):
-        f = open(path, 'rb')
-        tmp_dict = dill.load(f)
+        dict = pickle.load(path + '.settings')
+        mod = cls(dict['label_folders'], data_folder=dict['data_folder'],
+                   learning_rate=dict['learning_rate'],
+                   img_size=dict['img_size'],layers=dict['layers'],
+                    epochs=dict['epochs'], model_name=dict['model_name'])
+        if os.path.exists(path + '.meta'):
+            mod.model.load(path)
+            print('model loaded!')
+        else:
+            print('No trained model found, call train_model method after this.')
+        return mod
 
-        f.close()
-        print(tmp_dict)
-
-        #self.__dict__.update(tmp_dict)
-        #return pickle.load(path)
 
     def save_model(self):
-        f = open(self.model_name + '.settings', 'wb')
-        dill.dump(self.__dict__, f, 2)
+        dict = {key:value for key, value in self.__dict__.items() if not key.startswith('__') and not callable(value)}
+        self.model.save(self.data_folder + 'models/' + self.model_name)
+        print(dict)
+        f = open(self.data_folder + 'models/' + self.model_name + '.settings', 'wb')
+        pickle.dump(dict, f, 2)
         f.close()
+
 
     def load_testing_data(self, test_path):
         testing_data = []
@@ -98,14 +113,15 @@ class Model:
     #          path[2] = 'images/cow/'
     # paths will be appended to initialized 'data_folder'
     # Each folder name will become a label
+    # In the example labels would be cat, dog, cow
     def load_training_data(self):
         training_data = []
         for i in range(len(self.label_folders)):
             path = self.data_folder + self.label_folders[i]
             label = np.zeros(len(self.label_folders), np.int32)
-            tmp_dict = {self.label_folders[i]: label}
-            self.labels.update(tmp_dict)
             label[i] = 1
+            tmp_dict = {label:self.label_folders[i].split('/')[-1]}
+            self.labels.update(tmp_dict)
             for img in tqdm(os.listdir(path)):
                 path2 = os.path.join(path, img)
                 img = cv2.resize(cv2.imread(path2, cv2.IMREAD_GRAYSCALE),
@@ -117,6 +133,7 @@ class Model:
         print(self.labels)
         return training_data
 
+
     def train_model(self):
 
         if os.path.isfile(self.data_folder + self.model_name + '_train_data' + '.npy'):
@@ -126,7 +143,6 @@ class Model:
 
         if not os.path.exists(self.data_folder + 'models'):
             os.makedirs(self.data_folder + 'models')
-        os.chdir(self.data_folder + 'models')
 
         #Use 80% of the data for training and 20% for validation
         train_ratio = int(0.8 * len(train_data))
@@ -144,8 +160,8 @@ class Model:
                   ({'input': test_X}, {'targets': test_Y}), show_metric=True,
                   shuffle=False, snapshot_epoch=True, run_id=self.model_name)
 
-        self.model.save(self.model_name)
-        os.chdir('..')
+        save_model()
+        
 
 
     def predict(self, img, predictions=1):
@@ -153,7 +169,6 @@ class Model:
         return self.model.predict([data])[0]
         #highest = heapq.nlargest(predictions, out)
         #ret = []
-
 
 
     def test_model(self, path='test_data/'):

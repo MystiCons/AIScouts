@@ -6,8 +6,5 @@ mod = Model(paths, epochs=1, data_folder='/media/cf2017/levy/tensorflow/images/'
 
 mod.train_model()
 
-mod.save_model()
-
-mod2 = Model.load_model('/media/cf2017/levy/tensorflow/images/testi.model')
 
 
