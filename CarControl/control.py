@@ -8,26 +8,18 @@ class Control:
     #Pin configuration 
     Motor1A = 16
     Motor1B = 18
-    Motor1E = 22
+    Motor1E = 32
      
     Motor2A = 23
     Motor2B = 21
-    Motor2E = 19
+    Motor2E = 33
 
     #GPIO pinnit "BOARD" numeroilla + L298N pinnit A,B = suunnat ja E = Enable ja GPIO pinnien tilan asetus outputiksi
     #Mahdollisesti tulevaisuudessa E pinnejä voitaisiin käyttää PWM:llä rajoittamaan moottorien nopeutta
 
     def __init__(self):
         GPIO.setmode(GPIO.BOARD)
-        #Pin configuration 
-        '''Motor1A = 16
-        Motor1B = 18
-        Motor1E = 22
-     
-        Motor2A = 23
-        Motor2B = 21
-        Motor2E = 19'''
-        
+
         GPIO.setup(self.Motor1A,GPIO.OUT)
         GPIO.setup(self.Motor1B,GPIO.OUT)
         GPIO.setup(self.Motor1E,GPIO.OUT)

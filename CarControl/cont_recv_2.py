@@ -32,23 +32,45 @@ def main():
                 
                 if(message.find("forward") != -1):
                     cont.forward()
-                    time.sleep(0.5)
+                    time.sleep(0.3)
                     pass
                     
-                if(message.find("reverse") != -1):
+                if(message.find("backward") != -1):
                     cont.backward()
-                    time.sleep(0.5)
+                    time.sleep(0.3)
                     pass
                     
-                if(message.find("left") != -1):
+                if(message.find("turnleft") != -1):
                     cont.turnLeft()
-                    time.sleep(0.5)
+                    time.sleep(0.3)
                     pass
 
-                if(message.find("right") != -1):
+                if(message.find("turnright") != -1):
                     cont.turnRight()
-                    time.sleep(0.5)
+                    time.sleep(0.3)
                     pass
+                    
+                if(message.find("spinright") != -1):
+                    cont.spinRight()
+                    time.sleep(0.3)
+                    pass
+                    
+                if(message.find("spinleft") != -1):
+                    cont.spinLeft()
+                    time.sleep(0.3)
+                    pass
+                
+                if(message.find("reverseleft") != -1):
+                    cont.reverseLeft()
+                    time.sleep(0.3)
+                    pass
+                    
+                if(message.find("reverselight") != -1):
+                    cont.reverseRight()
+                    time.sleep(0.3)
+                    pass
+                
+                
                 if(message.find("stop") != -1):
                     cont.stop()
                     pass
@@ -92,7 +114,7 @@ def main():
                     print("B 0")
                     continue
                     
-                time.sleep(0.5)
+                time.sleep(0.2)
                 cont.stop()
             
 
