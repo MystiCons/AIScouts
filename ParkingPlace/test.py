@@ -20,24 +20,29 @@ import math
 # ===========
 # Layers = 4
 # LR = 0.001
-# Epochs = 20
-# Crop = 180
+# Epochs = 40
+# Crop = 175
 # Shuffle = False
 #
 
+#L6R0.001E10C190
+#L4R0.001E30C190
+#L4R0.001E40C190
 
-LR_iterations = 4
-Layer_iterations = 4
-epoch_iterations = 4
-start_epochs = 10
+
+
+LR_iterations = 1
+Layer_iterations = 1
+epoch_iterations = 1
+start_epochs = 40
 epochs = 0
 start_rate = 0.001
-start_layers = 3
+start_layers = 4
 image_file = '1.jpg'
-train = True
+train = False
 test = True
-crop_size = 180
-visualize = False
+crop_size = 175
+visualize = True
 
 
 for i in range(0, LR_iterations):

@@ -1,6 +1,8 @@
 import configparser
 import os
 
+from numpy.distutils.command import config, config
+
 
 def create_config(path, configs):
     if not os.path.exists(path):

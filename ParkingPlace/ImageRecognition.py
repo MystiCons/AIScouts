@@ -250,7 +250,7 @@ def draw_heatmap():
     cv2.imwrite(heatmap_img_file_name, image)
 
     os.chdir('..')
-    clusters = cluster_kmeans(POIX, POIY)
+    clusters = cluster_optics(POIX, POIY)
     park_mid_points = []
     #park_mid_points = cluster_meanshift(POIX, POIY)
 
@@ -281,7 +281,7 @@ def draw_heatmap():
     if not os.path.exists('results'):
         os.makedirs('results')
     os.chdir('results')
-    cv2.imwrite(model_name + 'C' + str(crop_size_width) + '.jpg', image)
+    cv2.imwrite(model_name + 'C' + str(crop_size_width) + 'CLOP' + '.jpg', image)
     os.chdir('..')
 
 def cluster_meanshift(xs, ys):
