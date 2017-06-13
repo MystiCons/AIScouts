@@ -12,7 +12,7 @@ import getopt
 from tqdm import tqdm
 from random import shuffle
 
-DATA_FOLDER = '/media/cf2017/levy/tensorflow/images/'
+DATA_FOLDER = '/media/cf2017/levy/backup/tensorflow/images/'
 IS_PARK_DIR = 'train_data/true/'
 IS_NOT_PARK_DIR = 'train_data/false/'
 TEST_DIR = 'test_data/'

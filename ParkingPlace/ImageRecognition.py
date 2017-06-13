@@ -16,7 +16,7 @@ from tflearn.layers.conv import conv_2d, max_pool_2d
 from tflearn.layers.core import input_data,  dropout,  fully_connected
 from tflearn.layers.estimator import regression
 
-DATA_FOLDER = '/media/cf2017/levy/tensorflow/images/'
+DATA_FOLDER = '/media/cf2017/levy/backup/tensorflow/images/'
 crop_size_width = 128
 crop_size_height = 128
 image_width = 0
