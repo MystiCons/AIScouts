@@ -195,17 +195,16 @@ class Model:
             print(path + ' not found!')
             exit(2)
         data = img.reshape(self.img_size, self.img_size, 1)
-        out = self.model.predict([data])
+        out = self.model.predict([data])[0]
         index = np.argmax(out)
-        return self.labels[index]
-
+        return self.labels[index], round(out[index], 3)
 
 
     def predict(self, img, predictions=1):
         data = img.reshape(self.img_size, self.img_size, 1)
-        out = self.model.predict([data])
+        out = self.model.predict([data])[0]
         index = np.argmax(out)
-        return self.labels[index]
+        return self.labels[index], round(out[index], 3)
 
 
     def test_model(self, path='test_data/'):
