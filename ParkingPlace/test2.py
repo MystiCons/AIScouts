@@ -1,12 +1,6 @@
-from model import Model
+from capture_ip_camera import IpCamera
 
-paths = ['cat/', 'coffee/', 'computer/', 'cup/', 'dog/', 'mouse/']
-data_folder = "/media/cf2017/levy/images/"
-#mod = Model(paths, learning_rate=0.001, layers=3, epochs=50, data_folder='/media/cf2017/levy/images/')
-#mod.train_model()
+camera = IpCamera('http://192.168.51.247/html/cam_pic.php?time=1497446828170&pDelay=40000')
 
-
-mod = Model.load_model(data_folder + "models/L3R0.001E50")
-#print(mod.predict_with_path(data_folder + paths[0] + '1'))
-#print(mod.predict_with_path(data_folder + paths[1] + '2'))
-mod.test_model('test_data/')
+while True:
+    camera.get_frame()

@@ -96,6 +96,12 @@ class Model:
         mod.relable()
         return mod
 
+    def save_settings(self):
+        dict = {key: value for key, value in self.__dict__.items() if
+                not key.startswith('__') and not callable(value) and not key == 'model'}
+        f = open(self.data_folder + 'models/' + self.model_name + '.settings', 'wb')
+        pickle.dump(dict, f, 2)
+        f.close()
 
     def save_model(self):
         dict = {key: value for key, value in self.__dict__.items() if not key.startswith('__') and not callable(value) and not key == 'model'}
@@ -146,7 +152,7 @@ class Model:
                     print('failed to load image: ' + path2)
             count += 1
         shuffle(training_data)
-        np.save(self.data_folder + '_train_data' + '.npy', training_data)
+        np.save(self.data_folder + self.model_name + '_train_data' + '.npy', training_data)
         return training_data
 
 
@@ -162,7 +168,8 @@ class Model:
         if os.path.isfile(self.data_folder + 'models/' + self.model_name + '.meta'):
             i = input('Model with the name: ' + self.model_name + ' already exists, do you want to continue training or load old one? ([c]ontinue/[l]oad)')
             if not i.lower() == 'continue' or 'c':
-                return Model.load_model(self.data_folder + 'models/' + self.model_name)
+                self.model = Model.load_model(self.data_folder + 'models/' + self.model_name)
+                return
         #Use 80% of the data for training and 20% for validation
         train_ratio = int(0.8 * len(train_data))
         test_ratio = int(0.2 * len(train_data))
@@ -201,6 +208,7 @@ class Model:
 
 
     def predict(self, img, predictions=1):
+        img = cv2.resize(img, (self.img_size, self.img_size))
         data = img.reshape(self.img_size, self.img_size, 1)
         out = self.model.predict([data])[0]
         index = np.argmax(out)
