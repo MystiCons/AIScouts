@@ -1,4 +1,4 @@
-from control import Control
+from control2 import Control
 import socket
 import time
 
@@ -11,7 +11,7 @@ def main():
     cont = Control()
     # Bind the socket to the port
     try:
-        server_address = ('192.168.51.1', 1337)
+        server_address = ('192.168.51.139', 1337)
         print ('starting up on port ' + str(server_address))
         sock.bind(server_address)
         # Listen for incoming connections
@@ -29,6 +29,7 @@ def main():
                 data = connection.recv(128)
                 message = str(data).strip()
                 #print('received ' + message)
+                cont.gpiosetup()
                 
                 if(message.find("forward") != -1):
                     cont.forward()
