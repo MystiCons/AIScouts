@@ -1,19 +1,34 @@
 import base64
-from urllib.request import Request, urlopen
+from urllib.request import Request, urlopen,\
+    HTTPPasswordMgrWithPriorAuth, HTTPBasicAuthHandler, build_opener, install_opener
 import cv2
 import numpy as np
 
 
 class IpCamera:
-    def __init__(self, url, user=None, password=None):
-        self.url = url
-        #auth_encoded = base64.encodebytes('%s:%s' % (user, password))[:-1]
+    user = None
+    password = None
+    opener = None
+    response = None
 
-        self.req = Request(self.url)
-        #self.req.add_header('Authorization', 'Basic %s' % auth_encoded)
+    def __init__(self, url, user=None, password=None):
+        self.user = user
+        self.password = password
+        self.url = url
+        password_manager = HTTPPasswordMgrWithPriorAuth()
+        password_manager.add_password(None, url, user, password, is_authenticated=True)
+        auth_manager = HTTPBasicAuthHandler(password_manager)
+        self.opener = build_opener(auth_manager)
+        #install_opener(self.opener)
+
+
+
 
     def get_frame(self):
-        response = urlopen(self.url)
-        img_array = np.asarray(bytearray(response.read()), dtype=np.uint8)
+        self.response = self.opener.open(self.url)
+        feed = self.response.read()
+        print("asd")
+        img_array = np.asarray(bytearray(feed), dtype=np.uint8)
+        print("qwe")
         frame = cv2.imdecode(img_array, cv2.IMREAD_GRAYSCALE)
         return frame

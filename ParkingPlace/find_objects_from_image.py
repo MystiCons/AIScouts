@@ -11,6 +11,8 @@ from pyclustering.cluster.kmeans import kmeans
 from pyclustering.cluster import cluster_visualizer
 
 
+
+
 class ObjectRecognition:
     crop_size = 128
     image_width = 0
@@ -19,11 +21,25 @@ class ObjectRecognition:
     curr_position = [0, 0]
     visualize = False
     interesting = []
+    #{Point of interest[x,y], cropsize[x,y]}
+    saved_poi = []
+    auto_find = False
 
 
-    def __init__(self, model, interesting_labels, visualize=False):
+    #MouseClickCallback variables
+    refPtStart = []
+    refPtEnd = []
+    cropping = False
+    setupImage = None
+    setupImage2 = None
+
+
+
+    # If interesting labels is None, the script will ask the user to draw his points of interest
+    def __init__(self, model, interesting_labels, auto_find=False, visualize=False):
         self.model = model
         self.visualize = visualize
+        self.auto_find = auto_find
         self.interesting = interesting_labels
 
 
@@ -35,27 +51,106 @@ class ObjectRecognition:
         return False
 
 
+    def reset_poi(self):
+        self.saved_poi = []
 
-    def find_objects(self, img, crop_size):
+
+    def find_objects(self, img, crop_size=None):
         if isinstance(img, str):
             image = cv2.imread(img, cv2.IMREAD_GRAYSCALE)
         else:
             image = img
         self.image_height, self.image_width = image.shape
-        poi = self.find_points_of_interest(crop_size, image.copy())
-        for i in range(len(poi)):
-            crop = image[int(poi[i][1]-crop_size/2):int(poi[i][1] + crop_size/2),
-                   int(poi[i][0]-crop_size/2):int(poi[i][0] + crop_size/2)]
+        if not self.auto_find:
+            #if saved points dictionary is empty
+            if not self.saved_poi:
+                self.draw_points_of_interest(image)
+        else:
+            if crop_size is None:
+                print("If the class is initialized with auto_find = True, please run find_objects with a crop_size=[x,y] parameter")
+                exit(2)
+            if not self.saved_poi:
+                self.find_points_of_interest(crop_size, image.copy())
+        for key, value in self.saved_poi:
+
+            crop = image[int(key[1]-value[1]/2):int(key[1] + value[1]/2),
+                   int(key[0]-value[0]/2):int(key[0] + value[0]/2)]
             label, confidence = self.model.predict(crop)
             if label in self.interesting:
                 cv2.rectangle(image,
-                              (int(poi[i][0]-crop_size/2), int(poi[i][1]-crop_size/2)),
-                              (int(poi[i][0] + crop_size/2),
-                              int(poi[i][1] + crop_size/2)),
+                              (int(key[0]-value[0]/2), int(key[1]-value[1]/2)),
+                              (int(key[0] + value[0]/2),
+                              int(key[1] + value[1]/2)),
                               (255, 0, 0),
                               2)
-        cv2.imshow('main', image)
-        cv2.waitKey(1)
+        return image
+
+
+
+    def draw_points_of_interest(self, img):
+        self.setupImage2 = img.copy()
+        self.setupImage = img.copy()
+        cv2.namedWindow("setup")
+        cv2.setMouseCallback("setup", self.click_and_crop)
+        while True:
+            cv2.imshow('setup', self.setupImage2)
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord("r"):
+                self.setupImage = img.copy()
+                self.setupImage2 = img.copy()
+                self.refPtStart = []
+                self.refPtEnd = []
+            # if esc is pressed, stop drawing mode
+            if key == 27:
+                for i in range(len(self.refPtEnd)):
+                    middle_x = 0
+                    middle_y = 0
+                    crop_size = [self.refPtEnd[i][0] - self.refPtStart[i][0],
+                                  self.refPtEnd[i][1] - self.refPtStart[i][1]]
+                    if crop_size[0] < 0:
+                        middle_x = int(self.refPtStart[i][0] - self.refPtEnd[i][0] / 2)
+                    if crop_size[0] > 0:
+                        middle_x = int(self.refPtStart[i][0] + self.refPtEnd[i][0] / 2)
+                    if crop_size[1] < 0:
+                        middle_y = int(self.refPtStart[i][1] - self.refPtEnd[i][1] / 2)
+                    if crop_size[1] > 0:
+                        middle_y = int(self.refPtStart[i][1] + self.refPtEnd[i][1] / 2)
+
+
+                    crop_size = [abs(crop_size[0]), abs(crop_size[1])]
+                    middle_point = [middle_x,
+                                    middle_y]
+                    self.saved_poi.append([middle_point, crop_size])
+                cv2.destroyAllWindows()
+                break
+
+    def click_and_crop(self, event, x, y, flags, param):
+
+        # if the left mouse button was clicked, record the starting
+        # (x, y) coordinates and indicate that cropping is being
+        # performed
+        if event == cv2.EVENT_LBUTTONDOWN:
+            self.refPtStart.append([x, y])
+            self.cropping = True
+
+        # check to see if the left mouse button was released
+        elif event == cv2.EVENT_LBUTTONUP:
+            # record the ending (x, y) coordinates and indicate that
+            # the cropping operation is finished
+            self.refPtEnd.append([x, y])
+            self.cropping = False
+
+            # draw a rectangle around the region of interest
+            cv2.rectangle(self.setupImage, (self.refPtStart[-1][0], self.refPtStart[-1][1])
+                                            , (self.refPtEnd[-1][0],self.refPtEnd[-1][1]), (0, 255, 0), 2)
+            self.setupImage2 = self.setupImage
+
+        elif self.cropping:
+            self.setupImage2 = self.setupImage.copy()
+            # draw a rectangle around the region of interest
+            cv2.rectangle(self.setupImage2, (self.refPtStart[-1][0], self.refPtStart[-1][1])
+                                            , (x, y), (0, 255, 0), 2)
+
 
 
     def find_points_of_interest(self, crop_size, img):
@@ -65,8 +160,8 @@ class ObjectRecognition:
         if self.visualize:
             visualize_img = img.copy()
         curr_position = [0, 0]
-        move_ratio_width = int(crop_size * 0.1)
-        move_ratio_height = int(crop_size * 0.1)
+        move_ratio_width = int(crop_size[0] * 0.1)
+        move_ratio_height = int(crop_size[1] * 0.1)
 
         image_orig = img.copy()
         if self.visualize:
@@ -74,38 +169,38 @@ class ObjectRecognition:
             cv2.waitKey(1)
         while True:
 
-            if curr_position[1] + crop_size >= self.image_height:
+            if curr_position[1] + crop_size[1] >= self.image_height:
                 break
             else:
                 curr_position[1] = curr_position[1] + move_ratio_height
                 curr_position[0] = 0
             while True:
-                crop = image_orig[curr_position[1]:curr_position[1] + crop_size, curr_position[0]:curr_position[0] + crop_size]
+                crop = image_orig[curr_position[1]:curr_position[1] + crop_size[1], curr_position[0]:curr_position[0] + crop_size[0]]
                 if self.predict_poi(crop):
-                    cv2.circle(img, (int(curr_position[0] + crop_size / 2), int(curr_position[1] + crop_size / 2)),
+                    cv2.circle(img, (int(curr_position[0] + crop_size[0] / 2), int(curr_position[1] + crop_size[1] / 2)),
                                   2,
                                   (255, 0, 0), -1)
-                    poix.append(curr_position[0] + crop_size / 2)
-                    poiy.append(curr_position[1] + crop_size / 2)
+                    poix.append(curr_position[0] + crop_size[0] / 2)
+                    poiy.append(curr_position[1] + crop_size[1] / 2)
                     curr_position[0] = int(curr_position[0] + move_ratio_width)
                 else:
                     curr_position[0] = int(curr_position[0] + move_ratio_width)
                 if self.visualize:
                     cv2.rectangle(visualize_img,
                                   (curr_position[0], curr_position[1]),
-                                  (curr_position[0] + crop_size,
-                                   curr_position[1] + crop_size),
+                                  (curr_position[0] + crop_size[0],
+                                   curr_position[1] + crop_size[1]),
                                   (255, 0, 0),
                                   2)
                     cv2.imshow('main', visualize_img)
                     cv2.waitKey(1)
                     visualize_img = img.copy()
-                if curr_position[0] + crop_size >= self.image_width:
+                if curr_position[0] + crop_size[0] >= self.image_width:
                     break
 
         if not os.path.exists('heatmaps'):
             os.makedirs('heatmaps')
-        heatmap_img_file_name = (self.model.model_name + 'C' + str(crop_size) + '.jpg')
+        heatmap_img_file_name = (self.model.model_name + 'CX' + str(crop_size[0])+ 'CY' + str(crop_size[1]) + '.jpg')
         cv2.imwrite('heatmaps/' + heatmap_img_file_name, img)
 
         clusters = self.cluster_optics(poix, poiy)
@@ -130,8 +225,10 @@ class ObjectRecognition:
 
         if not os.path.exists('POIs'):
             os.makedirs('POIs')
-        cv2.imwrite('POIs/' + self.model.model_name + 'C' + str(crop_size) + 'CLOP' + '.jpg', image)
-        return mid_points
+        cv2.imwrite('POIs/' + self.model.model_name + 'CX' + str(crop_size[0])+ 'CY' + str(crop_size[1]) + 'CLOP' + '.jpg',
+                    image)
+        for i in mid_points:
+            self.saved_poi.append([i, crop_size])
 
 
     def cluster_meanshift(self, xs, ys):
