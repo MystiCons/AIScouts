@@ -6,6 +6,7 @@ import RPi.GPIO as GPIO
 class Control:
 
     #Pin configuration
+
     Motor1A = 16
     Motor1B = 18
     Motor1E = 32

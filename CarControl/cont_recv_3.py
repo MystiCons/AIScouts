@@ -11,7 +11,7 @@ def main():
     cont = Control()
     # Bind the socket to the port
     try:
-        server_address = ('192.168.51.139', 1337)
+        server_address = ('192.168.51.212', 1337)
         print ('starting up on port ' + str(server_address))
         sock.bind(server_address)
         # Listen for incoming connections
@@ -24,12 +24,14 @@ def main():
             connection, client_address = sock.accept()
             print('connection from' + str(client_address))
             B = 1
+            cont.gpiosetup()
+            print("GPIO set")
             while (B == 1):
                
                 data = connection.recv(128)
                 message = str(data).strip()
                 #print('received ' + message)
-                cont.gpiosetup()
+                #cont.gpiosetup()
                 
                 if(message.find("forward") != -1):
                     cont.forward()
