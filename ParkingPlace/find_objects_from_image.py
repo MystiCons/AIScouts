@@ -91,18 +91,19 @@ class ObjectRecognition:
                 exit(2)
             if not self.saved_poi:
                 self.find_points_of_interest(crop_size, gray_image.copy())
+        counts = {}
         for key, value in self.saved_poi:
             crop = gray_image[int(key[1]-value[1]/2):int(key[1] + value[1]/2),
                    int(key[0]-value[0]/2):int(key[0] + value[0]/2)]
             t = time.time()
             label, confidence = self.model.predict(crop)
             print('predict time: ' + str(time.time() - t))
-            counts = {}
             if label in self.interesting:
                 if label in counts:
                     counts[label] += 1
                 else:
                     counts[label] = 1
+
                 cv2.rectangle(image,
                               (int(key[0]-value[0]/2), int(key[1]-value[1]/2)),
                               (int(key[0] + value[0]/2),
@@ -110,7 +111,7 @@ class ObjectRecognition:
                               (0, 255, 0),
                               2)
                 text = label + ' ' + str(confidence)
-                cv2.putText(image, text, (key[0] - 100, key[1]), cv2.FONT_HERSHEY_COMPLEX, 2, (0, 255, 0))
+                cv2.putText(image, text, (key[0] - 100, key[1]), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0))
             else:
                 if self.show_poi:
                     cv2.rectangle(image,
@@ -143,15 +144,11 @@ class ObjectRecognition:
                     middle_y = 0
                     crop_size = [self.refPtEnd[i][0] - self.refPtStart[i][0],
                                   self.refPtEnd[i][1] - self.refPtStart[i][1]]
-                    if crop_size[0] < 0:
-                        middle_x = int(self.refPtStart[i][0] - self.refPtEnd[i][0] / 2)
-                    if crop_size[0] > 0:
-                        middle_x = int(self.refPtStart[i][0] + self.refPtEnd[i][0] / 2)
-                    if crop_size[1] < 0:
-                        middle_y = int(self.refPtStart[i][1] - self.refPtEnd[i][1] / 2)
-                    if crop_size[1] > 0:
-                        middle_y = int(self.refPtStart[i][1] + self.refPtEnd[i][1] / 2)
 
+                    middle_x = int(self.refPtStart[i][0] + crop_size[0] / 2)
+                    middle_y = int(self.refPtStart[i][1] + crop_size[1] / 2)
+
+                    self.setupImage = img.copy()
 
                     crop_size = [abs(crop_size[0]), abs(crop_size[1])]
                     middle_point = [middle_x,
