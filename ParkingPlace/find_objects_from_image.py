@@ -9,6 +9,8 @@ try:
 except Exception as e:
     pass
 
+
+import pickle
 from random import randint
 from pyclustering.cluster.optics import optics
 from pyclustering.cluster.kmeans import kmeans
@@ -56,6 +58,16 @@ class ObjectRecognition:
 
     def reset_poi(self):
         self.saved_poi = []
+
+
+    def save_poi(self, path):
+        f = open(path + '.poi', 'wb')
+        pickle.dump(self.saved_poi, f, 2)
+        f.close()
+
+    def load_poi(self, path):
+        f = open(path + '.poi', 'rb')
+        self.saved_poi = pickle.load(f)
 
 
     def toggle_points_of_interest(self):
