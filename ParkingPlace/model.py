@@ -5,7 +5,7 @@ import cv2
 import pickle
 try:
     import matplotlib.pyplot as plt
-except:
+except Exception as e:
     pass
 
 

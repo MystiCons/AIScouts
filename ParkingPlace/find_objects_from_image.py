@@ -3,9 +3,12 @@ import numpy as np
 import os
 import cv2
 import time
-import matplotlib.pyplot as plt
+try:
+    import matplotlib.pyplot as plt
+    from sklearn.cluster import MeanShift, estimate_bandwidth
+except Exception as e:
+    pass
 
-from sklearn.cluster import MeanShift, estimate_bandwidth
 from random import randint
 from pyclustering.cluster.optics import optics
 from pyclustering.cluster.kmeans import kmeans
