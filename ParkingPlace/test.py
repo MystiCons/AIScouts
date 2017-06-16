@@ -22,27 +22,23 @@ camera = camera2
 #mod.test_model()
 objectrec = ObjectRecognition(mod, ['true', 'taken'], auto_find=False, visualize=True)
 while True:
-    try:
-        t = time.time()
-        frame = camera.get_frame()
-        print("Got new image in: " + str(round(t-time.time(), 4)) + " seconds")
-        t = time.time()
-        img = objectrec.find_objects(frame, [150, 150])
-        print("new image processed in: " + str(round(t-time.time(), 4)) + " seconds")
-        cv2.imshow('main', img)
-        key = cv2.waitKey(1)
-        if key == 27:
-            print('Closing')
-            camera.opener.close()
-            exit()
-        if key == ord('r'):
-            objectrec.reset_poi()
-
-    except Exception as e:
-        print(str(e))
+    t = time.time()
+    frame = camera.get_frame()
+    #print("Got new image in: " + str(round(t-time.time(), 4)) + " seconds")
+    t = time.time()
+    img, counts = objectrec.find_objects(frame, [150, 150])
+    #print("new image processed in: " + str(round(t-time.time(), 4)) + " seconds")
+    cv2.imshow('main', img)
+    key = cv2.waitKey(1)
+    if key == 27:
         print('Closing')
         camera.opener.close()
         exit()
+    if key == ord('r'):
+        objectrec.reset_poi()
+    if key == ord('s'):
+        objectrec.toggle_points_of_interest()
+
 
     #os.system('clear')
 

@@ -27,8 +27,6 @@ class IpCamera:
     def get_frame(self):
         self.response = self.opener.open(self.url)
         feed = self.response.read()
-        print("asd")
         img_array = np.asarray(bytearray(feed), dtype=np.uint8)
-        print("qwe")
-        frame = cv2.imdecode(img_array, cv2.IMREAD_GRAYSCALE)
+        frame = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
         return frame

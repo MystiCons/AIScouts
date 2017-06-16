@@ -24,7 +24,7 @@ class ObjectRecognition:
     #{Point of interest[x,y], cropsize[x,y]}
     saved_poi = []
     auto_find = False
-
+    show_poi = False
 
     #MouseClickCallback variables
     refPtStart = []
@@ -32,6 +32,7 @@ class ObjectRecognition:
     cropping = False
     setupImage = None
     setupImage2 = None
+
 
 
 
@@ -55,12 +56,17 @@ class ObjectRecognition:
         self.saved_poi = []
 
 
+    def toggle_points_of_interest(self):
+        self.show_poi = not self.show_poi
+
+
     def find_objects(self, img, crop_size=None):
         if isinstance(img, str):
             image = cv2.imread(img, cv2.IMREAD_GRAYSCALE)
         else:
             image = img
-        self.image_height, self.image_width = image.shape
+        gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        self.image_height, self.image_width = gray_image.shape
         if not self.auto_find:
             #if saved points dictionary is empty
             if not self.saved_poi:
@@ -70,20 +76,34 @@ class ObjectRecognition:
                 print("If the class is initialized with auto_find = True, please run find_objects with a crop_size=[x,y] parameter")
                 exit(2)
             if not self.saved_poi:
-                self.find_points_of_interest(crop_size, image.copy())
+                self.find_points_of_interest(crop_size, gray_image.copy())
         for key, value in self.saved_poi:
-
-            crop = image[int(key[1]-value[1]/2):int(key[1] + value[1]/2),
+            crop = gray_image[int(key[1]-value[1]/2):int(key[1] + value[1]/2),
                    int(key[0]-value[0]/2):int(key[0] + value[0]/2)]
             label, confidence = self.model.predict(crop)
+            counts = {}
             if label in self.interesting:
+                if label in counts:
+                    counts[label] += 1
+                else:
+                    counts[label] = 1
                 cv2.rectangle(image,
                               (int(key[0]-value[0]/2), int(key[1]-value[1]/2)),
                               (int(key[0] + value[0]/2),
                               int(key[1] + value[1]/2)),
-                              (255, 0, 0),
+                              (0, 255, 0),
                               2)
-        return image
+                text = label + ' ' + confidence
+                cv2.putText(image, text, (key[0] - 100, key[1]), cv2.FONT_HERSHEY_COMPLEX, 2, (0, 255, 0))
+            else:
+                if self.show_poi:
+                    cv2.rectangle(image,
+                                  (int(key[0]-value[0]/2), int(key[1]-value[1]/2)),
+                                  (int(key[0] + value[0]/2),
+                                  int(key[1] + value[1]/2)),
+                                  (255, 255, 255),
+                                  2)
+        return image, counts
 
 
 
@@ -126,30 +146,21 @@ class ObjectRecognition:
 
     def click_and_crop(self, event, x, y, flags, param):
 
-        # if the left mouse button was clicked, record the starting
-        # (x, y) coordinates and indicate that cropping is being
-        # performed
         if event == cv2.EVENT_LBUTTONDOWN:
             self.refPtStart.append([x, y])
             self.cropping = True
 
-        # check to see if the left mouse button was released
         elif event == cv2.EVENT_LBUTTONUP:
-            # record the ending (x, y) coordinates and indicate that
-            # the cropping operation is finished
             self.refPtEnd.append([x, y])
             self.cropping = False
-
-            # draw a rectangle around the region of interest
             cv2.rectangle(self.setupImage, (self.refPtStart[-1][0], self.refPtStart[-1][1])
                                             , (self.refPtEnd[-1][0],self.refPtEnd[-1][1]), (0, 255, 0), 2)
             self.setupImage2 = self.setupImage
 
         elif self.cropping:
             self.setupImage2 = self.setupImage.copy()
-            # draw a rectangle around the region of interest
-            cv2.rectangle(self.setupImage2, (self.refPtStart[-1][0], self.refPtStart[-1][1])
-                                            , (x, y), (0, 255, 0), 2)
+            cv2.rectangle(self.setupImage2, (self.refPtStart[-1][0], self.refPtStart[-1][1]),
+                          (x, y), (0, 255, 0), 2)
 
 
 
@@ -246,6 +257,7 @@ class ObjectRecognition:
         ret = clusters
 
         return ret
+
 
 
     def cluster_optics(self, xs, ys):
