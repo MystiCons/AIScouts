@@ -95,9 +95,7 @@ class ObjectRecognition:
         for key, value in self.saved_poi:
             crop = gray_image[int(key[1]-value[1]/2):int(key[1] + value[1]/2),
                    int(key[0]-value[0]/2):int(key[0] + value[0]/2)]
-            t = time.time()
             label, confidence = self.model.predict(crop)
-            print('predict time: ' + str(time.time() - t))
             if label in self.interesting:
                 if label in counts:
                     counts[label] += 1
@@ -110,8 +108,8 @@ class ObjectRecognition:
                               int(key[1] + value[1]/2)),
                               (0, 255, 0),
                               2)
-                text = label + ' ' + str(confidence)
-                cv2.putText(image, text, (key[0] - 100, key[1]), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0))
+                text = str(round(confidence, 2))
+                cv2.putText(image, text, (key[0] - len(text) * 3, key[1]), cv2.FONT_HERSHEY_PLAIN, 1, (0, 255, 0))
             else:
                 if self.show_poi:
                     cv2.rectangle(image,
@@ -127,7 +125,8 @@ class ObjectRecognition:
     def draw_points_of_interest(self, img):
         self.setupImage2 = img.copy()
         self.setupImage = img.copy()
-        cv2.namedWindow("setup")
+        cv2.namedWindow("setup", cv2.WINDOW_NORMAL)
+        cv2.resizeWindow('setup', 1280, 720)
         cv2.setMouseCallback("setup", self.click_and_crop)
         while True:
             cv2.imshow('setup', self.setupImage2)
@@ -140,8 +139,6 @@ class ObjectRecognition:
             # if esc is pressed, stop drawing mode
             if key == 27:
                 for i in range(len(self.refPtEnd)):
-                    middle_x = 0
-                    middle_y = 0
                     crop_size = [self.refPtEnd[i][0] - self.refPtStart[i][0],
                                   self.refPtEnd[i][1] - self.refPtStart[i][1]]
 
