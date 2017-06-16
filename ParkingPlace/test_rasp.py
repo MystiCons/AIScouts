@@ -12,7 +12,7 @@ while True:
         objectrec.load_poi('./poi')
     except Exception:
         print('Points of interest couldnt be loaded, trying to auto find')
-    img, counts = objectrec.find_objects('./1.jpg', [180, 180])
+    img, counts = objectrec.find_objects('./3.jpg', [180, 180])
 
     print("new image processed in: " + str(round(t-time.time(), 4)) + " seconds")
     print("found " + str(counts))
