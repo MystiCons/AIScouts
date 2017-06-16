@@ -3,8 +3,10 @@ import numpy as np
 import os
 import cv2
 import pickle
-import matplotlib.pyplot as plt
-import heapq
+try:
+    import matplotlib.pyplot as plt
+except:
+    pass
 
 
 from tqdm import tqdm

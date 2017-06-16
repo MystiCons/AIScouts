@@ -11,8 +11,6 @@ from pyclustering.cluster.kmeans import kmeans
 from pyclustering.cluster import cluster_visualizer
 
 
-
-
 class ObjectRecognition:
     crop_size = 128
     image_width = 0
