@@ -84,7 +84,7 @@ class ObjectRecognition:
                    int(key[0]-value[0]/2):int(key[0] + value[0]/2)]
             t = time.time()
             label, confidence = self.model.predict(crop)
-            print('predict time: ' + time.time() - t)
+            print('predict time: ' + str(time.time() - t))
             counts = {}
             if label in self.interesting:
                 if label in counts:
@@ -97,7 +97,7 @@ class ObjectRecognition:
                               int(key[1] + value[1]/2)),
                               (0, 255, 0),
                               2)
-                text = label + ' ' + confidence
+                text = label + ' ' + str(confidence)
                 cv2.putText(image, text, (key[0] - 100, key[1]), cv2.FONT_HERSHEY_COMPLEX, 2, (0, 255, 0))
             else:
                 if self.show_poi:
