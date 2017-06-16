@@ -64,7 +64,7 @@ class ObjectRecognition:
 
     def find_objects(self, img, crop_size=None):
         if isinstance(img, str):
-            image = cv2.imread(img, cv2.IMREAD_GRAYSCALE)
+            image = cv2.imread(img, cv2.IMREAD_COLOR)
         else:
             image = img
         gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
