@@ -2,6 +2,7 @@ from model import Model
 import numpy as np
 import os
 import cv2
+import time
 import matplotlib.pyplot as plt
 
 from sklearn.cluster import MeanShift, estimate_bandwidth
@@ -78,7 +79,9 @@ class ObjectRecognition:
         for key, value in self.saved_poi:
             crop = gray_image[int(key[1]-value[1]/2):int(key[1] + value[1]/2),
                    int(key[0]-value[0]/2):int(key[0] + value[0]/2)]
+            t = time.time()
             label, confidence = self.model.predict(crop)
+            print('predict time: ' + time.time() - t)
             counts = {}
             if label in self.interesting:
                 if label in counts:
