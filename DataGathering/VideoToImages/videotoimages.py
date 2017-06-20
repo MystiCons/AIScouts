@@ -55,7 +55,7 @@ def videos_to_pictures(output_folder,  vids):
                 success,  image = vid.read()
                 if(cv2.waitKey(10) == 27 or success == False):
                     break
-                cv2.imwrite(str(count) + '.jpg',  image)
+                cv2.imwrite(str(count) + '.bmp',  image)
                 count += 1
         os.chdir('..')
 

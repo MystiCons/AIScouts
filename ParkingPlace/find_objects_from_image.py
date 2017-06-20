@@ -29,13 +29,17 @@ class ObjectRecognition:
     saved_poi = []
     auto_find = False
     show_poi = False
-
+    curr_image = None
+    curr_image_gray = None
     #MouseClickCallback variables
     refPtStart = []
     refPtEnd = []
     cropping = False
     setupImage = None
     setupImage2 = None
+
+    elapsed_time = 0
+    start_time = 0
 
 
 
@@ -57,7 +61,9 @@ class ObjectRecognition:
 
 
     def reset_poi(self):
-        self.saved_poi = []
+        self.saved_poi.clear()
+        self.refPtStart.clear()
+        self.refPtEnd.clear()
 
 
     def save_poi(self, path):
@@ -69,20 +75,46 @@ class ObjectRecognition:
         f = open(path + '.poi', 'rb')
         self.saved_poi = pickle.load(f)
 
-
     def toggle_points_of_interest(self):
         self.show_poi = not self.show_poi
 
+    def save_images_from_poi(self, image, path, every_x_s=None):
+        if not os.path.isdir(path):
+            os.mkdir(path)
+        if every_x_s is None:
+
+            for key, value in self.saved_poi:
+                crop = image[int(key[1] - value[1] / 2):int(key[1] + value[1] / 2),
+                       int(key[0] - value[0] / 2):int(key[0] + value[0] / 2)]
+                dir = os.listdir(path)
+                count = len(dir)
+                cv2.imwrite(path + str(count) + '.bmp', crop)
+        else:
+            # if start time hasn't been initialized
+            if self.start_time == 0:
+                self.start_time = time.time()
+            self.elapsed_time = time.time() - self.start_time
+            if self.elapsed_time >= every_x_s:
+                for key, value in self.saved_poi:
+                    crop = image[int(key[1] - value[1] / 2):int(key[1] + value[1] / 2),
+                           int(key[0] - value[0] / 2):int(key[0] + value[0] / 2)]
+                    dir = os.listdir(path)
+                    count = len(dir)
+                    cv2.imwrite(path + str(count) + '.bmp', crop)
+                self.start_time = time.time()
+                self.elapsed_time = 0
 
     def find_objects(self, img, crop_size=None):
         if isinstance(img, str):
             image = cv2.imread(img, cv2.IMREAD_COLOR)
         else:
             image = img
+        self.curr_image = image.copy()
         gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        self.curr_image_gray = gray_image.copy()
         self.image_height, self.image_width = gray_image.shape
         if not self.auto_find:
-            #if saved points dictionary is empty
+            # if saved points dictionary is empty
             if not self.saved_poi:
                 self.draw_points_of_interest(image)
         else:
@@ -97,6 +129,14 @@ class ObjectRecognition:
                    int(key[0]-value[0]/2):int(key[0] + value[0]/2)]
             label, confidence = self.model.predict(crop)
             if label in self.interesting:
+                if label == self.interesting[0]:
+                    color = (0, 255, 0)
+                elif label == self.interesting[1]:
+                    color = (255, 0, 0)
+                elif label == self.interesting[2]:
+                    color = (0, 0, 255)
+                else:
+                    color = (0, 0, 0)
                 if label in counts:
                     counts[label] += 1
                 else:
@@ -106,7 +146,7 @@ class ObjectRecognition:
                               (int(key[0]-value[0]/2), int(key[1]-value[1]/2)),
                               (int(key[0] + value[0]/2),
                               int(key[1] + value[1]/2)),
-                              (0, 255, 0),
+                              color,
                               2)
                 text = str(round(confidence, 2))
                 cv2.putText(image, text, (key[0] - len(text) * 3, key[1]), cv2.FONT_HERSHEY_PLAIN, 1, (0, 255, 0))
@@ -119,8 +159,6 @@ class ObjectRecognition:
                                   (255, 255, 255),
                                   2)
         return image, counts
-
-
 
     def draw_points_of_interest(self, img):
         self.setupImage2 = img.copy()
@@ -152,6 +190,7 @@ class ObjectRecognition:
                                     middle_y]
                     self.saved_poi.append([middle_point, crop_size])
                 cv2.destroyAllWindows()
+                self.save_poi('./points')
                 break
 
     def click_and_crop(self, event, x, y, flags, param):
@@ -160,19 +199,56 @@ class ObjectRecognition:
             self.refPtStart.append([x, y])
             self.cropping = True
 
+        if event == cv2.EVENT_RBUTTONDOWN and self.cropping is False:
+            if len(self.refPtEnd) == 0:
+                return
+            del self.refPtStart[-1]
+            del self.refPtEnd[-1]
+            self.setupImage = self.curr_image.copy()
+            for i in range(len(self.refPtStart)):
+                crop = self.curr_image_gray[int(self.refPtStart[i][1]):int(self.refPtEnd[i][1]),
+                       int(self.refPtStart[i][0]):int(self.refPtEnd[i][0])]
+                label, confidence = self.model.predict(crop)
+                if label in self.interesting:
+                    if label == self.interesting[0]:
+                        color = (0, 255, 0)
+                    elif label == self.interesting[1]:
+                        color = (255, 0, 0)
+                    elif label == self.interesting[2]:
+                        color = (0, 0, 255)
+                    else:
+                        color = (0, 0, 0)
+                cv2.rectangle(self.setupImage, (self.refPtStart[i][0], self.refPtStart[i][1]),
+                              (self.refPtEnd[i][0], self.refPtEnd[i][1]), color, 2)
+                self.setupImage2 = self.setupImage.copy()
+
+
         elif event == cv2.EVENT_LBUTTONUP:
             self.refPtEnd.append([x, y])
             self.cropping = False
+            crop = self.curr_image_gray[int(self.refPtStart[-1][1]):int(self.refPtEnd[-1][1]),
+                   int(self.refPtStart[-1][0]):int(self.refPtEnd[-1][0])]
+            cv2.imshow('setup2', crop)
+            label, confidence = self.model.predict(crop)
+            if label in self.interesting:
+                if label == self.interesting[0]:
+                    color = (0, 255, 0)
+                elif label == self.interesting[1]:
+                    color = (255, 0, 0)
+                elif label == self.interesting[2]:
+                    color = (0, 0, 255)
+                else:
+                    color = (0, 0, 0)
+            else:
+                color = (0, 0, 0)
             cv2.rectangle(self.setupImage, (self.refPtStart[-1][0], self.refPtStart[-1][1])
-                                            , (self.refPtEnd[-1][0],self.refPtEnd[-1][1]), (0, 255, 0), 2)
-            self.setupImage2 = self.setupImage
+                                            , (self.refPtEnd[-1][0],self.refPtEnd[-1][1]), color, 2)
+            self.setupImage2 = self.setupImage.copy()
 
         elif self.cropping:
             self.setupImage2 = self.setupImage.copy()
             cv2.rectangle(self.setupImage2, (self.refPtStart[-1][0], self.refPtStart[-1][1]),
                           (x, y), (0, 255, 0), 2)
-
-
 
     def find_points_of_interest(self, crop_size, img):
         poix = []
@@ -221,7 +297,7 @@ class ObjectRecognition:
 
         if not os.path.exists('heatmaps'):
             os.makedirs('heatmaps')
-        heatmap_img_file_name = (self.model.model_name + 'CX' + str(crop_size[0])+ 'CY' + str(crop_size[1]) + '.jpg')
+        heatmap_img_file_name = (self.model.model_name + 'CX' + str(crop_size[0])+ 'CY' + str(crop_size[1]) + '.bmp')
         cv2.imwrite('heatmaps/' + heatmap_img_file_name, img)
 
         clusters = self.cluster_optics(poix, poiy)
@@ -246,7 +322,7 @@ class ObjectRecognition:
 
         if not os.path.exists('POIs'):
             os.makedirs('POIs')
-        cv2.imwrite('POIs/' + self.model.model_name + 'CX' + str(crop_size[0])+ 'CY' + str(crop_size[1]) + 'CLOP' + '.jpg',
+        cv2.imwrite('POIs/' + self.model.model_name + 'CX' + str(crop_size[0])+ 'CY' + str(crop_size[1]) + 'CLOP' + '.bmp',
                     image)
         for i in mid_points:
             self.saved_poi.append([i, crop_size])
