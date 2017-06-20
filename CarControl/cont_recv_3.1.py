@@ -11,10 +11,10 @@ def main():
     cont = Control()
     # Bind the socket to the port
     try:
-        ipdevice = None
-        ipdevice = input("Input IP Address: ")
+        deviceip = None
+        deviceip = input("Input IP Address: ")
         #server_address = ('192.168.51.212', 1337)
-        server_address = (ipdevice, 1337)
+        server_address = (deviceip, 1337)
         print ('starting up on port ' + str(server_address))
         sock.bind(server_address)
         # Listen for incoming connections
