@@ -8,10 +8,20 @@ from time import sleep
 command = "stop"
 ch = None
 
+
+
+#Device ip address
+ipdevice = None
+ipdevice = input("Input IP Address: ")
+#server_address = ('192.168.51.212', 1337)
+server_address = (ipdevice, 1337)
+
 #Creating connection
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_address = ('192.168.51.139', 1337)
 sock.connect(server_address)
+
+
 
 def getch():
         fd = sys.stdin.fileno()
@@ -87,6 +97,8 @@ def poweroff():
         global command
         print("Closing receiver program and controlling program")
         command = "poweroff"
+
+
 
 
 # Instructions printed on console

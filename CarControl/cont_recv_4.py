@@ -3,6 +3,13 @@ import socket
 import time
 
 
+def getipaddr():
+    sock_ip = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock_ip.connect(("195.148.129.49", 80))
+    ownip = None
+    ownip = (sock_ip.getsockname()[0])
+    print("Your IP Address is: ", ownip)
+    return ownip
 
 
 def main():
@@ -11,10 +18,10 @@ def main():
     cont = Control()
     # Bind the socket to the port
     try:
-        ipdevice = None
-        ipdevice = input("Input IP Address: ")
+
         #server_address = ('192.168.51.212', 1337)
-        server_address = (ipdevice, 1337)
+        ip = str(getipaddr())
+        server_address = (ip, 1337)
         print ('starting up on port ' + str(server_address))
         sock.bind(server_address)
         # Listen for incoming connections
@@ -92,18 +99,10 @@ def main():
                     continue
                     
                 #Equal to Didnt work correctly
-                '''if(message == "poweroff"):
-                    cont.stop()
-                    cont.GPIO.cleanup()
-                    B = 0
-                    sock.shutdown(1)
-                    sock.close()
-                    print ("Program closed")
-                    time.sleep(1000)
-                    continue'''
+
                 if(message.find("poweroff") != -1):
                     cont.stop()
-                    cont.cleanup()
+                    #cont.cleanup()
                     B = 0
                     A = 0
                     sock.shutdown(1)
@@ -129,15 +128,19 @@ def main():
                 #sock.close()
                 time.sleep(1)
                 connection.shutdown(socket.SHUT_RDWR)
+                time.sleep(0.1)
+                cont.cleanup()
                 print("A 0")
                 break
                 
             
     except Exception as exc:
+        pass
         print("Error:"+ str(exc))
         cont.stop()
+        cont.cleanup()
         sock.shutdown(1)
         sock.close()
-            
+
 if __name__ == "__main__":
     main()
