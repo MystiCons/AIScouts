@@ -14,6 +14,7 @@ from random import shuffle
 from tflearn.layers.conv import conv_2d, max_pool_2d
 from tflearn.layers.core import input_data,  dropout,  fully_connected
 from tflearn.layers.estimator import regression
+from tflearn.optimizers import Adam
 
 
 # Represents a convolutional neural network
@@ -69,12 +70,14 @@ class Model:
         convnet = dropout(convnet, 0.8)
 
         convnet = fully_connected(convnet, len(self.label_folders), activation='softmax')
-        convnet = regression(convnet, optimizer='adam', learning_rate=self.learning_rate,
+        convnet = regression(convnet, optimizer='Adam', shuffle_batches=False, learning_rate=self.learning_rate,
                              loss='categorical_crossentropy',
                              name='targets')
 
+        if not os.path.isdir(self.data_folder + 'checkpoints/' + self.model_name + '/'):
+            os.mkdir(self.data_folder + 'checkpoints/' + self.model_name + '/')
         self.model = tflearn.DNN(convnet, tensorboard_dir='log',
-                            checkpoint_path=self.data_folder + 'checkpoints/')
+                            checkpoint_path=self.data_folder + 'checkpoints/' + self.model_name + '/')
 
     # Loads a saved instance of class Model
     @classmethod
@@ -126,14 +129,6 @@ class Model:
         return testing_data
 
 
-    # Loads training data from paths array, each path should be a folder which contains
-    # images for each possible answer
-    # Example: path[0] = 'images/cat/'
-    #          path[1] = 'images/dog/'
-    #          path[2] = 'images/cow/'
-    # paths will be appended to initialized 'data_folder'
-    # Each folder name will become a label
-    # In the example labels would be cat, dog, cow
     def load_training_data(self):
         training_data = []
         count = 0
@@ -158,12 +153,21 @@ class Model:
         return training_data
 
 
-    def train_model(self):
+    def train_model(self, saved_train_data=None):
 
-        if os.path.isfile(self.data_folder + 'train_data' + '.npy'):
-            train_data = np.load(self.data_folder + 'train_data' + '.npy')
+        if saved_train_data is None:
+            if os.path.isfile(self.data_folder + self.model_name + '_train_data' + '.npy'):
+                train_data = np.load(self.data_folder + self.model_name + '_train_data' + '.npy')
+                self.relable()
+            else:
+                train_data = self.load_training_data()
         else:
-            train_data = self.load_training_data()
+            if os.path.isfile(self.data_folder + saved_train_data + '.npy'):
+                train_data = np.load(self.data_folder + saved_train_data + '.npy')
+                self.relable()
+            else:
+                print('Given data file not found, loading data.')
+                train_data = self.load_training_data()
 
         if not os.path.exists(self.data_folder + 'models'):
             os.makedirs(self.data_folder + 'models')
@@ -302,7 +306,8 @@ class DataManipulation:
             if save_images_path is None:
                 new_images.append(res2)
             else:
-                cv2.imwrite(save_images_path + str(i) + '.bmp',
+                dirlen = len(os.listdir(save_images_path))
+                cv2.imwrite(save_images_path + str(dirlen) + '.bmp',
                             res2)
 
         if save_images_path is not None:
@@ -313,24 +318,41 @@ class DataManipulation:
         dir = os.listdir(src)
         images = []
         for i in tqdm(range(len(dir))):
-            img = cv2.resize(cv2.imread(src + str(i) + '.bmp', cv2.IMREAD_GRAYSCALE),
-                             (img_size, img_size))
+            img = cv2.imread(src + str(i) + '.bmp', cv2.IMREAD_GRAYSCALE)
             images.append(np.array(img))
 
+
         for i in range(len(images)):
-            img = images[i]
-            cv2.flip(images[i], 1, img)
-            cv2.imwrite(dest + str(i) + '.bmp',
-                        img)
+            try:
+                img = images[i]
+                cv2.flip(images[i], 1, img)
+                cv2.imwrite(dest + str(i) + '.bmp',
+                            img)
+            except Exception:
+                pass
 
 
 if __name__ == '__main__':
+    inp = "/media/cf2017/levy/tensorflow/parking_place/new_training_data/"
+    out = "/media/cf2017/levy/tensorflow/parking_place/new_training_data/"
     #mod = Model.load_model("/media/cf2017/levy/tensorflow/images/" + "models/testi1")
     #mod.try_cluster_training_data("/media/cf2017/levy/tensorflow/images/new_training_data/", 2)
     #mod.color_quantization(mod.data_folder + 'clustered_images/A/', mod.data_folder + 'clustered_images/A/')
-    manipulator = DataManipulation("/media/cf2017/levy/tensorflow/images/")
-    #manipulator.color_quantization("/media/cf2017/levy/tensorflow/images/clustered_images/Car/", 8, 128, save_images_path="/media/cf2017/levy/tensorflow/images/clustered_images/asd/")
-    manipulator.flip_images("/media/cf2017/levy/tensorflow/images/clustered_images/Car/", "/media/cf2017/levy/tensorflow/images/clustered_images/asd/", 128)
+    manipulator = DataManipulation("/media/cf2017/levy/tensorflow/parking_place/")
+    #manipulator.try_cluster_training_data("/media/cf2017/levy/tensorflow/parking_place/new_training_data/", 3)
+    '''
+    manipulator.color_quantization(inp + "Parks/", 16, 128, save_images_path=inp + "Parks/")
+    manipulator.color_quantization(inp + "Parks/", 12, 128, save_images_path=inp + "Parks/")
+    manipulator.color_quantization(inp + "Cars/", 16, 128, save_images_path=inp + "Cars/")
+    manipulator.color_quantization(inp + "Cars/", 12, 128, save_images_path=inp + "Cars/")
+    manipulator.color_quantization(inp + "Parks/", 8, 128, save_images_path=inp + "Parks/")
+    manipulator.color_quantization(inp + "Parks/", 4, 128, save_images_path=inp + "Parks/")
+    manipulator.color_quantization(inp + "Cars/", 8, 128, save_images_path=inp + "Cars/")
+    manipulator.color_quantization(inp + "Cars/", 4, 128, save_images_path=inp + "Cars/")
+    '''
+
+    manipulator.flip_images(inp + "Parks/", inp + "temp_parks/", 128)
+    manipulator.flip_images(inp + "Cars/", inp + "temp_cars/", 128)
 
 
 

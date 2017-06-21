@@ -3,6 +3,7 @@ import numpy as np
 import os
 import cv2
 import time
+
 try:
     import matplotlib.pyplot as plt
     from sklearn.cluster import MeanShift, estimate_bandwidth
@@ -29,6 +30,7 @@ class ObjectRecognition:
     saved_poi = []
     auto_find = False
     show_poi = False
+    labels_counts = {}
     curr_image = None
     curr_image_gray = None
     #MouseClickCallback variables
@@ -50,6 +52,8 @@ class ObjectRecognition:
         self.visualize = visualize
         self.auto_find = auto_find
         self.interesting = interesting_labels
+        for label in model.label_folders:
+            self.labels_counts.update({label.split('/')[-2]: []})
 
 
     def predict_poi(self, crop):
@@ -78,31 +82,25 @@ class ObjectRecognition:
     def toggle_points_of_interest(self):
         self.show_poi = not self.show_poi
 
-    def save_images_from_poi(self, image, path, every_x_s=None):
+    def save_images_from_poi(self, image, path, every_x_s):
         if not os.path.isdir(path):
             os.mkdir(path)
-        if every_x_s is None:
-
+        # if start time hasn't been initialized
+        if self.start_time == 0:
+            self.start_time = time.time()
+        self.elapsed_time = time.time() - self.start_time
+        if self.elapsed_time >= every_x_s:
             for key, value in self.saved_poi:
                 crop = image[int(key[1] - value[1] / 2):int(key[1] + value[1] / 2),
                        int(key[0] - value[0] / 2):int(key[0] + value[0] / 2)]
-                dir = os.listdir(path)
-                count = len(dir)
-                cv2.imwrite(path + str(count) + '.bmp', crop)
-        else:
-            # if start time hasn't been initialized
-            if self.start_time == 0:
-                self.start_time = time.time()
-            self.elapsed_time = time.time() - self.start_time
-            if self.elapsed_time >= every_x_s:
-                for key, value in self.saved_poi:
-                    crop = image[int(key[1] - value[1] / 2):int(key[1] + value[1] / 2),
-                           int(key[0] - value[0] / 2):int(key[0] + value[0] / 2)]
-                    dir = os.listdir(path)
-                    count = len(dir)
-                    cv2.imwrite(path + str(count) + '.bmp', crop)
-                self.start_time = time.time()
-                self.elapsed_time = 0
+                img = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
+                label, confidence = self.model.predict(img)
+                if not os.path.isdir(path + label):
+                    os.mkdir(path + label)
+                dirlen = len(os.listdir(path + label))
+                cv2.imwrite(path + label + '/' + str(dirlen + 1) + '.bmp', crop)
+            self.start_time = time.time()
+            self.elapsed_time = 0
 
     def find_objects(self, img, crop_size=None):
         if isinstance(img, str):
@@ -123,7 +121,9 @@ class ObjectRecognition:
                 exit(2)
             if not self.saved_poi:
                 self.find_points_of_interest(crop_size, gray_image.copy())
-        counts = {}
+        for key in self.labels_counts:
+            self.labels_counts[key].clear()
+        i = 0
         for key, value in self.saved_poi:
             crop = gray_image[int(key[1]-value[1]/2):int(key[1] + value[1]/2),
                    int(key[0]-value[0]/2):int(key[0] + value[0]/2)]
@@ -137,19 +137,16 @@ class ObjectRecognition:
                     color = (0, 0, 255)
                 else:
                     color = (0, 0, 0)
-                if label in counts:
-                    counts[label] += 1
-                else:
-                    counts[label] = 1
-
-                cv2.rectangle(image,
-                              (int(key[0]-value[0]/2), int(key[1]-value[1]/2)),
-                              (int(key[0] + value[0]/2),
-                              int(key[1] + value[1]/2)),
-                              color,
-                              2)
-                text = str(round(confidence, 2))
-                cv2.putText(image, text, (key[0] - len(text) * 3, key[1]), cv2.FONT_HERSHEY_PLAIN, 1, (0, 255, 0))
+                self.labels_counts[label].append(i)
+                if self.visualize:
+                    cv2.rectangle(image,
+                                  (int(key[0]-value[0]/2), int(key[1]-value[1]/2)),
+                                  (int(key[0] + value[0]/2),
+                                  int(key[1] + value[1]/2)),
+                                  color,
+                                  2)
+                    text = str(i) + ' C: ' + str(round(confidence, 2))
+                    cv2.putText(image, text, (key[0] - len(text) * 3, key[1]), cv2.FONT_HERSHEY_PLAIN, 1, (0, 255, 0))
             else:
                 if self.show_poi:
                     cv2.rectangle(image,
@@ -158,7 +155,8 @@ class ObjectRecognition:
                                   int(key[1] + value[1]/2)),
                                   (255, 255, 255),
                                   2)
-        return image, counts
+            i += 1
+        return image, self.labels_counts
 
     def draw_points_of_interest(self, img):
         self.setupImage2 = img.copy()
@@ -219,7 +217,7 @@ class ObjectRecognition:
                     else:
                         color = (0, 0, 0)
                 cv2.rectangle(self.setupImage, (self.refPtStart[i][0], self.refPtStart[i][1]),
-                              (self.refPtEnd[i][0], self.refPtEnd[i][1]), color, 2)
+                                  (self.refPtEnd[i][0], self.refPtEnd[i][1]), color, 2)
                 self.setupImage2 = self.setupImage.copy()
 
 
@@ -241,6 +239,7 @@ class ObjectRecognition:
                     color = (0, 0, 0)
             else:
                 color = (0, 0, 0)
+
             cv2.rectangle(self.setupImage, (self.refPtStart[-1][0], self.refPtStart[-1][1])
                                             , (self.refPtEnd[-1][0],self.refPtEnd[-1][1]), color, 2)
             self.setupImage2 = self.setupImage.copy()
