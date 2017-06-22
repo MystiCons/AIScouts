@@ -1,4 +1,4 @@
-from model import Model
+
 import numpy as np
 import os
 import cv2
@@ -6,7 +6,6 @@ import time
 
 try:
     import matplotlib.pyplot as plt
-    from sklearn.cluster import MeanShift, estimate_bandwidth
 except Exception as e:
     pass
 
@@ -325,23 +324,6 @@ class ObjectRecognition:
                     image)
         for i in mid_points:
             self.saved_poi.append([i, crop_size])
-
-
-    def cluster_meanshift(self, xs, ys):
-        POI = []
-        for i in range(len(xs)):
-            POI.append([xs[i], ys[i]])
-        POI = np.array(POI)
-
-        bw = estimate_bandwidth(POI, quantile=0.085, n_samples=50)
-
-        ms = MeanShift(bw, bin_seeding=True)
-        ms.fit(POI)
-        clusters = ms.cluster_centers_.astype(int)
-
-        ret = clusters
-
-        return ret
 
 
 
