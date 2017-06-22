@@ -1,6 +1,6 @@
 from rasp_model import Model
 from rasp_find_objects_from_image import ObjectRecognition
-from capture_ip_camera import IpCamera
+from rasp_ip_camera import IpCamera
 import time
 import requests
 import json

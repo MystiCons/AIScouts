@@ -1,9 +1,7 @@
 import base64
-from urllib.request import Request, urlopen,\
-    HTTPPasswordMgrWithPriorAuth, HTTPBasicAuthHandler, build_opener, install_opener
+from urllib.request import HTTPPasswordMgrWithDefaultRealm, HTTPBasicAuthHandler, build_opener
 import cv2
 import numpy as np
-
 
 class IpCamera:
     user = None
@@ -15,14 +13,11 @@ class IpCamera:
         self.user = user
         self.password = password
         self.url = url
-        password_manager = HTTPPasswordMgrWithPriorAuth()
-        password_manager.add_password(None, url, user, password, is_authenticated=True)
+        password_manager = HTTPPasswordMgrWithDefaultRealm()
+        password_manager.add_password(None, url, user, password)
         auth_manager = HTTPBasicAuthHandler(password_manager)
         self.opener = build_opener(auth_manager)
         #install_opener(self.opener)
-
-
-
 
     def get_frame(self):
         self.response = self.opener.open(self.url)
