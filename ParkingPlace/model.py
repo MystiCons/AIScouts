@@ -46,6 +46,7 @@ class Model:
         self.debug = False
         self.model_name = model_name
         self.data_folder = data_folder
+
         if not self.data_folder[-1] == '/':
             self.data_folder += '/'
 
@@ -130,11 +131,17 @@ class Model:
 
 
     def load_training_data(self):
-        training_data = []
+        training_data = np.array([])
+        data = []
         count = 0
+        iteration = 0
+
+        if not os.path.isdir(self.data_folder + self.model_name):
+            os.mkdir(self.data_folder + self.model_name)
+        save_path = self.data_folder + self.model_name + '/'
+
         for i in range(len(self.label_folders)):
             path = self.data_folder + self.label_folders[i]
-
             label = np.zeros(len(self.label_folders), np.int32)
             label[i] = 1
             tmp_dict = {count: self.label_folders[i].split('/')[-2]}
@@ -144,26 +151,57 @@ class Model:
                 try:
                     img = cv2.resize(cv2.imread(path2, cv2.IMREAD_GRAYSCALE),
                                      (self.img_size, self.img_size))
-                    training_data.append([np.array(img), np.array(label)])
+                    data.append([np.array(img), np.array(label)])
                 except Exception:
                     print('failed to load image: ' + path2)
+                iteration += 1
+                if iteration > 40000:
+                    if training_data.size == 0:
+                        training_data = data.copy()
+                    else:
+                        training_data = np.concatenate((training_data, data))
+                    self.save_data_set_partition(data, save_path)
+                    data.clear()
+                    iteration = 0
             count += 1
-        shuffle(training_data)
-        np.save(self.data_folder + self.model_name + '_train_data' + '.npy', training_data)
+        # Save excess data
+        if not iteration == 0:
+            if training_data.size == 0:
+                training_data = data
+            else:
+                training_data = np.concatenate((training_data, data))
+            self.save_data_set_partition(data, save_path)
+            data.clear()
+        np.random.shuffle(training_data)
         return training_data
 
+    def save_data_set_partition(self, data, save_path):
+        np.save(save_path + self.model_name + '_train_data' + len(os.listdir(save_path)) + '.npy', data)
 
-    def train_model(self, saved_train_data=None):
-
-        if saved_train_data is None:
-            if os.path.isfile(self.data_folder + self.model_name + '_train_data' + '.npy'):
-                train_data = np.load(self.data_folder + self.model_name + '_train_data' + '.npy')
-                self.relable()
+    def load_saved_data_set(self, path):
+        data = np.array([])
+        for file in os.listdir(path):
+            load = np.load(path + file)
+            if data.size == 0:
+                data = load
             else:
-                train_data = self.load_training_data()
+                data = np.concatenate((data, load))
+        if data.size == 0:
+            print('Data set loading failed.')
+            exit(2)
+        np.random.shuffle(data)
+
+        return data
+
+
+
+    def train_model(self, saved_train_data_path=None):
+
+        if saved_train_data_path is None:
+            train_data = self.load_training_data()
         else:
-            if os.path.isfile(self.data_folder + saved_train_data + '.npy'):
-                train_data = np.load(self.data_folder + saved_train_data + '.npy')
+            if os.path.isdir(saved_train_data_path):
+                train_data = self.load_saved_data_set(saved_train_data_path)
                 self.relable()
             else:
                 print('Given data file not found, loading data.')
@@ -340,18 +378,15 @@ if __name__ == '__main__':
     #mod.color_quantization(mod.data_folder + 'clustered_images/A/', mod.data_folder + 'clustered_images/A/')
     manipulator = DataManipulation("/media/cf2017/levy/tensorflow/parking_place/")
     #manipulator.try_cluster_training_data("/media/cf2017/levy/tensorflow/parking_place/new_training_data/", 3)
-    '''
-    manipulator.color_quantization(inp + "Parks/", 16, 128, save_images_path=inp + "Parks/")
-    manipulator.color_quantization(inp + "Parks/", 12, 128, save_images_path=inp + "Parks/")
-    manipulator.color_quantization(inp + "Cars/", 16, 128, save_images_path=inp + "Cars/")
-    manipulator.color_quantization(inp + "Cars/", 12, 128, save_images_path=inp + "Cars/")
-    manipulator.color_quantization(inp + "Parks/", 8, 128, save_images_path=inp + "Parks/")
-    manipulator.color_quantization(inp + "Parks/", 4, 128, save_images_path=inp + "Parks/")
-    manipulator.color_quantization(inp + "Cars/", 8, 128, save_images_path=inp + "Cars/")
-    manipulator.color_quantization(inp + "Cars/", 4, 128, save_images_path=inp + "Cars/")
-    '''
+    #manipulator.color_quantization(inp + "Parks/", 24, 128, save_images_path=inp + "Parks/")
+    #manipulator.color_quantization(inp + "Parks/", 16, 128, save_images_path=inp + "Parks/")
+    #manipulator.color_quantization(inp + "Parks/", 12, 128, save_images_path=inp + "Parks/")
+    #manipulator.color_quantization(inp + "Cars/", 16, 128, save_images_path=inp + "Cars/")
+    #manipulator.color_quantization(inp + "Cars/", 12, 128, save_images_path=inp + "Cars/")
+    manipulator.color_quantization(inp + "Cars/", 6, 128, save_images_path=inp + "Cars/")
 
-    manipulator.flip_images(inp + "Parks/", inp + "temp_parks/", 128)
+
+    #manipulator.flip_images(inp + "Parks/", inp + "temp_parks/", 128)
     manipulator.flip_images(inp + "Cars/", inp + "temp_cars/", 128)
 
 
