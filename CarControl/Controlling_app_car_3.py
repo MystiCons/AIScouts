@@ -89,7 +89,7 @@ def poweroff():
 try:
     #Device ip address
     #ipdevice = None
-    ipdevice = raw_input("Input IP Address: ")
+    ipdevice = input("Input IP Address: ")
     #server_address = ('192.168.51.212', 1337)
     server_address = (ipdevice, 1337)
     server_address = server_address

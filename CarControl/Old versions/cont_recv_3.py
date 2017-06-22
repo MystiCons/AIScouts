@@ -136,6 +136,7 @@ def main():
     except Exception as exc:
         print("Error:"+ str(exc))
         cont.stop()
+        cont.cleanup()
         sock.shutdown(1)
         sock.close()
             
