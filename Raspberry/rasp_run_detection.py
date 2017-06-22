@@ -7,7 +7,7 @@ import json
 import datetime
 
 
-mod = Model.load_model("models/park_model14")
+mod = Model.load_model("../ParkingPlace/models/park_model14")
 interesting_labels = ['Car', 'Park']
 objectrec = ObjectRecognition(mod, interesting_labels, auto_find=False, visualize=False)
 
@@ -28,7 +28,7 @@ for label in interesting_labels:
 while True:
     t = time.time()
     try:
-        objectrec.load_poi('./points')
+        objectrec.load_poi('../ParkingPlace/points')
     except Exception:
         print('Points of interest couldnt be loaded, trying to auto find')
     img, counts = objectrec.find_objects(camera.get_frame(), [180, 180])
