@@ -64,8 +64,6 @@ class Model:
                              loss='categorical_crossentropy',
                              name='targets')
 
-        if not os.path.isdir(self.data_folder + 'checkpoints/' + self.model_name + '/'):
-            os.mkdir(self.data_folder + 'checkpoints/' + self.model_name + '/')
         self.model = tflearn.DNN(convnet, tensorboard_dir='log',
                                  checkpoint_path=self.data_folder + 'checkpoints/' + self.model_name + '/')
 
