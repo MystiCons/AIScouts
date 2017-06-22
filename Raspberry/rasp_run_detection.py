@@ -31,7 +31,7 @@ while True:
         objectrec.load_poi('../ParkingPlace/points')
     except Exception:
         print('Points of interest couldnt be loaded, trying to auto find')
-    img, counts = objectrec.find_objects(camera.get_frame(), [180, 180])
+    img, counts = objectrec.find_objects(camera.get_frame())
     print("new image processed in: " + str(round(t-time.time(), 4)) + " seconds")
     elapsed_time = time.time() - start_time
     elapsed_time2 = time.time() - start_time2
