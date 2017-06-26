@@ -93,7 +93,8 @@ class ObjectRecognition:
         for key, value in self.saved_poi:
             crop = img_array[int(key[1]-value[1]/2):int(key[1] + value[1]/2),
                    int(key[0]-value[0]/2):int(key[0] + value[0]/2)]
-            label, confidence = self.model.predict(crop)
+            img = Image.fromarray(crop, 'L')
+            label, confidence = self.model.predict(img)
             if label in self.interesting:
                 self.labels_counts[label].append(i)
             i += 1
