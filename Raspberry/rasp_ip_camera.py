@@ -25,5 +25,4 @@ class IpCamera:
         feed = self.response.read()
         img_array = np.asarray(bytearray(feed), dtype=np.uint8)
         frame = Image.open(BytesIO(img_array))
-        print(np.asarray(frame))
         return frame
