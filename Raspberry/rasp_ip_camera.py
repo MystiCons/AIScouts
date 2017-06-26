@@ -21,6 +21,7 @@ class IpCamera:
         self.opener = build_opener(auth_manager)
         #install_opener(self.opener)
 
+
     def get_frame(self):
         self.response = self.opener.open(self.url)
         feed = self.response.read()
