@@ -101,7 +101,7 @@ class Model:
         try:
             img = Image.open(path)
             img = img.convert('L')
-            img = img.thumbnail((self.img_size, self.img_size), Image.ANTIALIAS)
+            img.thumbnail((self.img_size, self.img_size), Image.ANTIALIAS)
             img = np.asarray(img)
         except Exception:
             print(path + ' not found!')
@@ -112,7 +112,7 @@ class Model:
         return self.labels[index], round(out[index], 3)
 
     def predict(self, img, predictions=1):
-        img = img.thumbnail((self.img_size, self.img_size), Image.ANTIALIAS)
+        img.thumbnail((self.img_size, self.img_size), Image.ANTIALIAS)
         img = np.asarray(img)
         data = img.reshape(self.img_size, self.img_size, 1)
         out = self.model.predict([data])[0]
