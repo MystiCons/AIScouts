@@ -84,19 +84,16 @@ class ObjectRecognition:
             image = img
         self.curr_image = image.copy()
         gray_image = image.convert('L')
-        print(gray_image)
         self.curr_image_gray = gray_image.copy()
         self.image_height, self.image_width = gray_image.size
         for key in self.labels_counts:
             self.labels_counts[key].clear()
         i = 0
         img_array = np.asarray(gray_image)
-        print(img_array)
         for key, value in self.saved_poi:
             crop = img_array[int(key[1]-value[1]/2):int(key[1] + value[1]/2),
                    int(key[0]-value[0]/2):int(key[0] + value[0]/2)]
             img = Image.fromarray(crop, 'L')
-            print(img)
             label, confidence = self.model.predict(img)
             if label in self.interesting:
                 self.labels_counts[label].append(i)
