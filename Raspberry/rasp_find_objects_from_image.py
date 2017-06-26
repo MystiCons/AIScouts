@@ -91,10 +91,11 @@ class ObjectRecognition:
         i = 0
         img_array = np.asarray(gray_image)
         for key, value in self.saved_poi:
-            crop = img_array[int(key[1]-value[1]/2):int(key[1] + value[1]/2),
-                   int(key[0]-value[0]/2):int(key[0] + value[0]/2)]
-            img = Image.fromarray(crop, 'L')
-            label, confidence = self.model.predict(img)
+            #crop = img_array[int(key[1]-value[1]/2):int(key[1] + value[1]/2),
+            #       int(key[0]-value[0]/2):int(key[0] + value[0]/2)]
+            crop = gray_image.crop((int(key[0]-value[0]/2), int(key[1]-value[1]/2), int(key[0] + value[0]/2), int(key[1] + value[1]/2)))
+            #img = Image.fromarray(crop, 'L')
+            label, confidence = self.model.predict(crop)
             if label in self.interesting:
                 self.labels_counts[label].append(i)
             i += 1
