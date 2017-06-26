@@ -2,6 +2,7 @@ import os
 import time
 import pickle
 from PIL import Image
+from PIL import ImageDraw
 import numpy as np
 class ObjectRecognition:
     crop_size = 128
@@ -86,10 +87,24 @@ class ObjectRecognition:
         for key in self.labels_counts:
             self.labels_counts[key].clear()
         i = 0
+        ret = image
+        image_array = np.asarray(gray_image)
         for key, value in self.saved_poi:
-            crop = gray_image.crop((int(key[0]-value[0]/2), int(key[1]-value[1]/2), int(key[0] + value[0]/2), int(key[1] + value[1]/2)))
-            label, confidence = self.model.predict(crop)
+            crop = image_array[int(key[1] - value[1] / 2):int(key[1] + value[1] / 2),
+                   int(key[0] - value[0] / 2):int(key[0] + value[0] / 2)]
+            img = Image.fromarray(crop, 'L')
+            label, confidence = self.model.predict(img)
             if label in self.interesting:
+                ret = ImageDraw.Draw(image)
+                if label == self.interesting[0]:
+                    color = 'black'
+                elif label == self.interesting[1]:
+                    color = 'white'
+                elif label == self.interesting[2]:
+                    color = 'red'
+                else:
+                    color = 'blue'
+                ret.rectangle(((int(key[0]-value[0]/2), int(key[1]-value[1]/2)), (int(key[0] + value[0]/2), int(key[1] + value[1]/2))), outline=color)
                 self.labels_counts[label].append(i)
             i += 1
         return image, self.labels_counts

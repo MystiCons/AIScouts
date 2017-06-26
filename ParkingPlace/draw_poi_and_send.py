@@ -3,12 +3,11 @@ from find_objects_from_image import ObjectRecognition
 import os
 import cv2
 
-mod = Model.load_model("models/testi1")
+mod = Model.load_model("models/park_model14")
 
-objectrec = ObjectRecognition(mod, ['true', 'taken', 'false'])
-objectrec.toggle_points_of_interest()
+objectrec = ObjectRecognition(mod, ['Park', 'Car'])
 
-img, counts = objectrec.find_objects('./4.jpg')
+img, counts = objectrec.find_objects('./1.bmp')
 cv2.imshow('main', img)
 cv2.waitKey()
 

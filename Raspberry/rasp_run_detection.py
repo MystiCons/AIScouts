@@ -6,7 +6,8 @@ import time
 import requests
 import json
 import datetime
-
+import os
+from PIL import Image
 
 mod = Model.load_model("../ParkingPlace/models/park_model14")
 interesting_labels = ['Car', 'Park']
@@ -19,7 +20,6 @@ elapsed_time = 0
 start_time2 = time.time()
 elapsed_time2 = 0
 
-
 summed_counts = {}
 avg_counts = {}
 for label in interesting_labels:
@@ -28,6 +28,7 @@ for label in interesting_labels:
 
 
 while True:
+
     t = time.time()
     try:
         objectrec.load_poi('../ParkingPlace/points')
