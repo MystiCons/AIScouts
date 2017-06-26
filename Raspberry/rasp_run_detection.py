@@ -35,7 +35,10 @@ while True:
     except Exception:
         print('Points of interest couldnt be loaded, trying to auto find')
     img, counts = objectrec.find_objects(camera.get_frame())
-    print("new image processed in: " + str(round(t-time.time(), 4)) + " seconds")
+    for key in counts:
+        for v in counts[key]:
+            summed_counts[key].append(v)
+
     elapsed_time = time.time() - start_time
     elapsed_time2 = time.time() - start_time2
 
@@ -55,7 +58,6 @@ while True:
         start_time = time.time()
         try:
             data = {'Cars': avg_counts['Car'], 'Free': avg_counts['Park']}
-            print(data)
             r = requests.post('http://192.168.51.140:8080/api/v1/gngqqCwoYPqr5qWmUw8v/telemetry',
                               data=json.dumps(data))
         except Exception:
