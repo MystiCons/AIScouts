@@ -40,7 +40,7 @@ class ObjectRecognition:
 
     def predict_poi(self, crop):
         img = Image.fromarray(crop, 'L')
-        img = img.resize((self.model.img_size, self.model.img_size))
+        img = img.thumbnail((self.img_size, self.img_size), Image.ANTIALIAS)
         label, confidence = self.model.predict(img)
         if label in self.interesting:
             return True
