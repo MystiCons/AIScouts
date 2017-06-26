@@ -1,9 +1,9 @@
 import tflearn
 import numpy as np
 import os
-import cv2
 import pickle
 
+from PIL import Image
 from tflearn.layers.conv import conv_2d, max_pool_2d
 from tflearn.layers.core import input_data, dropout, fully_connected
 from tflearn.layers.estimator import regression
@@ -99,8 +99,10 @@ class Model:
 
     def predict_with_path(self, path, predictions=1):
         try:
-            img = cv2.resize(cv2.imread(path, cv2.IMREAD_GRAYSCALE),
-                             (self.img_size, self.img_size))
+            img = Image.open(path)
+            img = img.convert('L')
+            img = img.resize((self.img_size, self.img_size))
+            img = np.asarray(img)
         except Exception:
             print(path + ' not found!')
             exit(2)
@@ -110,7 +112,8 @@ class Model:
         return self.labels[index], round(out[index], 3)
 
     def predict(self, img, predictions=1):
-        img = cv2.resize(img, (self.img_size, self.img_size))
+        img = img.resize((self.img_size, self.img_size))
+        img = np.asarray(img)
         data = img.reshape(self.img_size, self.img_size, 1)
         out = self.model.predict([data])[0]
         index = np.argmax(out)

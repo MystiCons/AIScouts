@@ -1,7 +1,8 @@
 import base64
 from urllib.request import HTTPPasswordMgrWithDefaultRealm, HTTPBasicAuthHandler, build_opener
-import cv2
+from PIL import Image
 import numpy as np
+from io import BytesIO
 
 class IpCamera:
     user = None
@@ -23,5 +24,7 @@ class IpCamera:
         self.response = self.opener.open(self.url)
         feed = self.response.read()
         img_array = np.asarray(bytearray(feed), dtype=np.uint8)
-        frame = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+        frame = Image.open(BytesIO(img_array))
+
+        #frame = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
         return frame

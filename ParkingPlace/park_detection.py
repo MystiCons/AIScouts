@@ -11,13 +11,13 @@ import datetime
 
 paths = ['/Car/', '/Park/']
 data_folder = "/media/cf2017/levy/tensorflow/parking_place/"
-mod = Model(paths, learning_rate=0.001, layers=4, epochs=10,
-           data_folder=data_folder, model_name='park_model14')
+#mod = Model(paths, learning_rate=0.001, layers=4, epochs=10,
+#           data_folder=data_folder, model_name='park_model14')
 #mod.save_settings()
-mod.train_model(saved_train_data_path=data_folder+"park_model14/")
+#mod.train_model(saved_train_data_path=data_folder+"park_model14/")
 
 
-#mod = Model.load_model(data_folder + "models/park_model13")
+mod = Model.load_model(data_folder + "models/park_model14")
 #mod.test_model()
 camera1 = IpCamera('http://192.168.51.207/cam_pic.php', user='User', password='Salasana1')
 camera2 = IpCamera('http://192.168.51.205/html/cam_pic.php', user='Parkki', password='S4lasana#07')

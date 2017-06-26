@@ -1,8 +1,8 @@
 import os
-import cv2
 import time
 import pickle
-
+from PIL import Image
+import numpy as np
 class ObjectRecognition:
     crop_size = 128
     image_width = 0
@@ -39,7 +39,8 @@ class ObjectRecognition:
 
 
     def predict_poi(self, crop):
-        img = cv2.resize(crop, (self.model.img_size, self.model.img_size))
+        img = Image.fromarray(crop, 'L')
+        img = img.resize((self.model.img_size, self.model.img_size))
         label, confidence = self.model.predict(img)
         if label in self.interesting:
             return True
@@ -62,28 +63,29 @@ class ObjectRecognition:
         if self.start_time == 0:
             self.start_time = time.time()
         self.elapsed_time = time.time() - self.start_time
+        image_array = np.asarray(image)
         if self.elapsed_time >= every_x_s:
             for key, value in self.saved_poi:
-                crop = image[int(key[1] - value[1] / 2):int(key[1] + value[1] / 2),
+                crop = image_array[int(key[1] - value[1] / 2):int(key[1] + value[1] / 2),
                        int(key[0] - value[0] / 2):int(key[0] + value[0] / 2)]
-                img = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
+                img = Image.fromarray(crop, 'L')
                 label, confidence = self.model.predict(img)
                 if not os.path.isdir(path + label):
                     os.mkdir(path + label)
                 dirlen = len(os.listdir(path + label))
-                cv2.imwrite(path + label + '/' + str(dirlen + 1) + '.bmp', crop)
+                img.save(path + label + '/' + str(dirlen + 1) + '.bmp')
             self.start_time = time.time()
             self.elapsed_time = 0
 
     def find_objects(self, img):
         if isinstance(img, str):
-            image = cv2.imread(img, cv2.IMREAD_COLOR)
+            image = Image.open(img)
         else:
             image = img
         self.curr_image = image.copy()
-        gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        gray_image = image.convert('L')
         self.curr_image_gray = gray_image.copy()
-        self.image_height, self.image_width = gray_image.shape
+        self.image_height, self.image_width = gray_image.size
         for key in self.labels_counts:
             self.labels_counts[key].clear()
         i = 0
@@ -92,31 +94,6 @@ class ObjectRecognition:
                    int(key[0]-value[0]/2):int(key[0] + value[0]/2)]
             label, confidence = self.model.predict(crop)
             if label in self.interesting:
-                if label == self.interesting[0]:
-                    color = (0, 255, 0)
-                elif label == self.interesting[1]:
-                    color = (255, 0, 0)
-                elif label == self.interesting[2]:
-                    color = (0, 0, 255)
-                else:
-                    color = (0, 0, 0)
                 self.labels_counts[label].append(i)
-                if self.visualize:
-                    cv2.rectangle(image,
-                                  (int(key[0]-value[0]/2), int(key[1]-value[1]/2)),
-                                  (int(key[0] + value[0]/2),
-                                  int(key[1] + value[1]/2)),
-                                  color,
-                                  2)
-                    text = str(i) + ' C: ' + str(round(confidence, 2))
-                    cv2.putText(image, text, (key[0] - len(text) * 3, key[1]), cv2.FONT_HERSHEY_PLAIN, 1, (0, 255, 0))
-            else:
-                if self.show_poi:
-                    cv2.rectangle(image,
-                                  (int(key[0]-value[0]/2), int(key[1]-value[1]/2)),
-                                  (int(key[0] + value[0]/2),
-                                  int(key[1] + value[1]/2)),
-                                  (255, 255, 255),
-                                  2)
             i += 1
         return image, self.labels_counts

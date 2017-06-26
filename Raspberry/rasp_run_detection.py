@@ -35,6 +35,7 @@ while True:
     print("new image processed in: " + str(round(t-time.time(), 4)) + " seconds")
     elapsed_time = time.time() - start_time
     elapsed_time2 = time.time() - start_time2
+
     if elapsed_time2 >= 30:
         elapsed_time2 = 0
         start_time2 = time.time()
@@ -45,6 +46,7 @@ while True:
             for key in summed_counts:
                 key_counts.update({key: summed_counts[key].count(i)})
             avg_counts[max(key_counts, key=key_counts.get)] += 1
+
     if elapsed_time >= 60:
         elapsed_time = 0
         start_time = time.time()
