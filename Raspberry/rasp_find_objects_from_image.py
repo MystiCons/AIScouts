@@ -89,8 +89,9 @@ class ObjectRecognition:
         for key in self.labels_counts:
             self.labels_counts[key].clear()
         i = 0
+        img_array = np.asarray(gray_image)
         for key, value in self.saved_poi:
-            crop = gray_image[int(key[1]-value[1]/2):int(key[1] + value[1]/2),
+            crop = img_array[int(key[1]-value[1]/2):int(key[1] + value[1]/2),
                    int(key[0]-value[0]/2):int(key[0] + value[0]/2)]
             label, confidence = self.model.predict(crop)
             if label in self.interesting:
