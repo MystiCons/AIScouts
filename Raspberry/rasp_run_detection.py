@@ -1,7 +1,7 @@
 from rasp_model import Model
 from rasp_find_objects_from_image import ObjectRecognition
 from rasp_ip_camera import IpCamera
-from Camera import get_frame
+from Camera import Camera
 import time
 import requests
 import json
@@ -13,7 +13,7 @@ interesting_labels = ['Car', 'Park']
 objectrec = ObjectRecognition(mod, interesting_labels, auto_find=False, visualize=False)
 
 #camera = IpCamera('http://192.168.51.131/html/cam_pic.php', user='Parkki', password='S4lasana#123')
-
+camera = Camera()
 start_time = time.time()
 elapsed_time = 0
 start_time2 = time.time()
@@ -33,7 +33,7 @@ while True:
         objectrec.load_poi('../ParkingPlace/points')
     except Exception:
         print('Points of interest couldnt be loaded, trying to auto find')
-    img, counts = objectrec.find_objects(get_frame())
+    img, counts = objectrec.find_objects(camera.get_frame())
     print("new image processed in: " + str(round(t-time.time(), 4)) + " seconds")
     elapsed_time = time.time() - start_time
     elapsed_time2 = time.time() - start_time2
