@@ -113,7 +113,9 @@ class Model:
 
     def predict(self, img, predictions=1):
         img = img.thumbnail((self.img_size, self.img_size), Image.ANTIALIAS)
+        print(img)
         img = np.asarray(img)
+        print(img)
         data = img.reshape(self.img_size, self.img_size, 1)
         out = self.model.predict([data])[0]
         index = np.argmax(out)
