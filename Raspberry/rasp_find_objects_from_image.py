@@ -40,7 +40,7 @@ class ObjectRecognition:
 
     def predict_poi(self, crop):
         img = Image.fromarray(crop, 'L')
-        img.thumbnail((self.img_size, self.img_size), Image.ANTIALIAS)
+        img = img.resize((self.img_size, self.img_size), Image.ANTIALIAS)
         label, confidence = self.model.predict(img)
         if label in self.interesting:
             return True
@@ -86,12 +86,8 @@ class ObjectRecognition:
         for key in self.labels_counts:
             self.labels_counts[key].clear()
         i = 0
-        #img_array = np.asarray(gray_image)
         for key, value in self.saved_poi:
-            #crop = img_array[int(key[1]-value[1]/2):int(key[1] + value[1]/2),
-            #       int(key[0]-value[0]/2):int(key[0] + value[0]/2)]
             crop = gray_image.crop((int(key[0]-value[0]/2), int(key[1]-value[1]/2), int(key[0] + value[0]/2), int(key[1] + value[1]/2)))
-            #img = Image.fromarray(crop, 'L')
             label, confidence = self.model.predict(crop)
             if label in self.interesting:
                 self.labels_counts[label].append(i)

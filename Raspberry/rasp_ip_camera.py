@@ -4,6 +4,7 @@ from PIL import Image
 from io import BytesIO
 import numpy as np
 
+
 class IpCamera:
     user = None
     password = None
