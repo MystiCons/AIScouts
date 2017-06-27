@@ -117,6 +117,7 @@ class Model:
         data = img.reshape(self.img_size, self.img_size, 1)
         out = self.model.predict([data])[0]
         index = np.argmax(out)
+        # Return label and confidence
         return self.labels[index], round(out[index], 3)
 
 
