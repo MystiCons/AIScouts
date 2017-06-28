@@ -28,18 +28,23 @@ for label in interesting_labels:
     avg_counts.update({label: 0})
 
 count = 0
+try:
+    objectrec.load_poi('../ParkingPlace/points')
+except Exception:
+    print('Points of interest couldnt be loaded, trying to auto find')
 
 try:
     server = StreamServer()
     server_thread = threading.Thread(target=server.start)
     server_thread.daemon = True
     server_thread.start()
+    print("Initialization Successful!")
     while True:
+        if server.received_data:
+            poi = server.get_poi()
+            objectrec.saved_poi = poi
         t = time.time()
-        try:
-            objectrec.load_poi('../ParkingPlace/points')
-        except Exception:
-            print('Points of interest couldnt be loaded, trying to auto find')
+
         img, counts = objectrec.find_objects(camera.get_frame())
         for key in counts:
             for v in counts[key]:
@@ -59,7 +64,6 @@ try:
                     key_counts.update({key: summed_counts[key].count(i)})
                 avg_counts[max(key_counts, key=key_counts.get)] += 1
         server.send_data_to_all(img)
-        os.system('scp ./asd.bmp cf2017@192.168.51.18:/home/cf2017/asd.bmp')
         if elapsed_time >= 60:
             elapsed_time = 0
             start_time = time.time()
@@ -81,5 +85,6 @@ try:
         time.sleep(1)
         count += 1
 except (KeyboardInterrupt, SystemExit):
-    server.close()
     sys.exit()
+finally:
+    server.close()

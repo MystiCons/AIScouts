@@ -3,11 +3,7 @@ import numpy as np
 import os
 import cv2
 import pickle
-try:
-    import matplotlib.pyplot as plt
-except Exception as e:
-    pass
-
+import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 from random import shuffle
