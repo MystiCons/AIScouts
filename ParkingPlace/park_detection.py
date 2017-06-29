@@ -11,12 +11,15 @@ import datetime
 
 paths = ['/Car/', '/Park/']
 data_folder = "/media/cf2017/levy/tensorflow/parking_place/"
-#mod = Model(paths, learning_rate=0.001, layers=4, epochs=10,
-#           data_folder=data_folder, model_name='park_model14')
+mod = Model(paths, learning_rate=0.001, layers=4, epochs=200,
+           data_folder=data_folder, model_name='park_model15')
 #mod.save_settings()
-#mod.train_model(saved_train_data_path=data_folder+"park_model14/")
+time_elapsed = 0
+start_time = time.time()
+mod.train_model(saved_train_data_path=data_folder+"park_model14/")
+print(str(time.time() - start_time))
 
-
+'''
 mod = Model.load_model(data_folder + "models/park_model14")
 #mod.test_model()
 camera1 = IpCamera('http://192.168.51.207/cam_pic.php', user='User', password='Salasana1')
@@ -97,7 +100,7 @@ while True:
         except Exception:
             print('Could not connect to thingsboard! ' + str(datetime.datetime.now()))
 
-
+'''
 
 
 

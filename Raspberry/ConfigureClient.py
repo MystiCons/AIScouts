@@ -130,6 +130,7 @@ class Client:
         self.tcp_client = TCPClient()
         self.build_ui()
         self.panel.bind("<Button 1>", self.mouse_down)
+        self.panel.bind("<Button 1>", self.mouse2_down)
         self.panel.bind('<B1-Motion>', self.mouse_drag)
         self.panel.bind('<ButtonRelease-1>', self.mouse_up)
         self.root.after(100, self.show_new_image)
@@ -178,7 +179,11 @@ class Client:
             if not self.image_orig:
                 return
             self.image_draw_mode = self.image_orig.copy()
+            self.image_edited_lock.acquire()
+            self.image_edited = self.image_orig.copy()
+            self.image_edited_lock.release()
             self.reconfigure_mode = True
+            self.points_of_interest.clear()
             self.redraw_button.configure(text="Stop and send")
             self.cancel_button = tkinter.Button(self.root, text="Cancel drawing", width=10, command=self.cancel_redraw)
             self.cancel_button.pack()
@@ -186,6 +191,10 @@ class Client:
             self.cancel_redraw()
             self.tcp_client.send_data(self.points_of_interest)
             self.points_of_interest = []
+
+    def mouse2_down(self, event):
+        if not self.reconfigure_mode:
+            return
 
     def mouse_down(self, event):
         if not self.reconfigure_mode:

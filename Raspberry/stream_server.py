@@ -27,6 +27,14 @@ class StreamServer:
         self.connections_lock = threading.Lock()
         self.sock.listen(10)
 
+    def __enter__(self):
+        self.sock = socket.socket()
+        self.sock.bind((self.host, self.port))
+        # Set accept timeout to 60 sec
+        socket.setdefaulttimeout(30)
+        self.connections_lock = threading.Lock()
+        self.sock.listen(10)
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.closed = True
 
@@ -85,6 +93,7 @@ class StreamServer:
         try:
             while True:
                 chunks = []
+                chunk = 0
                 try:
                     chunk = conn.recv(2048)
                 except socket.error:

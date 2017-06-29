@@ -43,9 +43,11 @@ try:
         if server.received_data:
             poi = server.get_poi()
             objectrec.saved_poi = poi
+            objectrec.save_poi('../ParkingPlace/points')
         t = time.time()
 
         img, counts = objectrec.find_objects(camera.get_frame())
+
         for key in counts:
             for v in counts[key]:
                 summed_counts[key].append(v)
@@ -65,6 +67,8 @@ try:
                 avg_counts[max(key_counts, key=key_counts.get)] += 1
         server.send_data_to_all(img)
         if elapsed_time >= 60:
+            for key in summed_counts:
+                summed_counts[key].clear()
             elapsed_time = 0
             start_time = time.time()
             try:
@@ -87,4 +91,7 @@ try:
 except (KeyboardInterrupt, SystemExit):
     sys.exit()
 finally:
-    server.close()
+    try:
+        server.sock.close()
+    except os.error as e:
+        print(e.strerror)
