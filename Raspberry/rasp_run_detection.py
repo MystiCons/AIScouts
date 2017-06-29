@@ -34,7 +34,13 @@ except Exception:
     print('Points of interest couldnt be loaded, trying to auto find')
 
 try:
-    server = StreamServer()
+    server_launched = False
+    while not server_launched:
+        try:
+            server = StreamServer()
+            server_launched = True
+        except os.error as e:
+            print(e.strerror)
     server_thread = threading.Thread(target=server.start)
     server_thread.daemon = True
     server_thread.start()
@@ -67,15 +73,20 @@ try:
                 avg_counts[max(key_counts, key=key_counts.get)] += 1
         server.send_data_to_all(img)
         if elapsed_time >= 60:
-            for key in summed_counts:
-                summed_counts[key].clear()
             elapsed_time = 0
             start_time = time.time()
             try:
                 buffer = BytesIO()
                 img.save(buffer, format='JPEG')
                 img_str = base64.b64encode(buffer.getvalue())
-                data = {'Cars': avg_counts['Car'], 'Free': avg_counts['Park']}
+                data = {'NotFree': avg_counts['Car'], 'Free': avg_counts['Park']}
+                for key in counts:
+                    for park in counts[key]:
+                        value = 0
+                        if key == 'Park':
+                            value = 1
+                        data.update({str(park): value})
+
                 r = requests.post('http://192.168.51.140:8080/api/v1/gngqqCwoYPqr5qWmUw8v/telemetry',
                                   data=json.dumps(data))
                 r = requests.post('http://192.168.51.140:8080/api/v1/gngqqCwoYPqr5qWmUw8v/attributes',
@@ -85,6 +96,9 @@ try:
             except Exception as e:
                 print('Could not connect to thingsboard! ' + str(datetime.datetime.now()))
                 print(e.with_traceback())
+            finally:
+                for key in summed_counts:
+                    summed_counts[key].clear()
         #print("Looped in: " + str(round(t - time.time(), 4)) + " seconds")
         time.sleep(1)
         count += 1

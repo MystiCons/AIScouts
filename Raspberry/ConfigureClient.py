@@ -118,7 +118,7 @@ class Client:
     cancel_button = None
     connected = False
 
-    image_edited_lock = threading.Lock()
+    poi_lock = threading.Lock()
 
     mouse_start_x = 0
     mouse_start_y = 0
@@ -130,7 +130,7 @@ class Client:
         self.tcp_client = TCPClient()
         self.build_ui()
         self.panel.bind("<Button 1>", self.mouse_down)
-        self.panel.bind("<Button 1>", self.mouse2_down)
+        self.panel.bind("<Button 3>", self.mouse2_down)
         self.panel.bind('<B1-Motion>', self.mouse_drag)
         self.panel.bind('<ButtonRelease-1>', self.mouse_up)
         self.root.after(100, self.show_new_image)
@@ -179,26 +179,35 @@ class Client:
             if not self.image_orig:
                 return
             self.image_draw_mode = self.image_orig.copy()
-            self.image_edited_lock.acquire()
             self.image_edited = self.image_orig.copy()
-            self.image_edited_lock.release()
             self.reconfigure_mode = True
+            self.poi_lock.acquire()
             self.points_of_interest.clear()
+            self.poi_lock.release()
             self.redraw_button.configure(text="Stop and send")
             self.cancel_button = tkinter.Button(self.root, text="Cancel drawing", width=10, command=self.cancel_redraw)
             self.cancel_button.pack()
         else:
             self.cancel_redraw()
+            self.poi_lock.acquire()
             self.tcp_client.send_data(self.points_of_interest)
-            self.points_of_interest = []
+            self.points_of_interest.clear()
+            self.poi_lock.release()
 
     def mouse2_down(self, event):
         if not self.reconfigure_mode:
             return
+        self.poi_lock.acquire()
+        if len(self.points_of_interest) > 0:
+            del self.points_of_interest[-1]
+        self.poi_lock.release()
 
     def mouse_down(self, event):
         if not self.reconfigure_mode:
             return
+        self.poi_lock.acquire()
+        self.points_of_interest.append([[event.x, event.y], [0, 0]])
+        self.poi_lock.release()
         self.mouse_start_x = event.x
         self.mouse_start_y = event.y
 
@@ -207,25 +216,25 @@ class Client:
             return
         crop_size = [self.mouse_start_x - event.x,
                      self.mouse_start_y - event.y]
-
         crop_size = [abs(crop_size[0]), abs(crop_size[1])]
         middle_point = [int(self.mouse_start_x - (self.mouse_start_x - event.x) / 2),
                         int(self.mouse_start_y - (self.mouse_start_y - event.y) / 2)]
-        self.points_of_interest.append([middle_point, crop_size])
-        img2 = ImageDraw.Draw(self.image_draw_mode)
-        img2.rectangle(((self.mouse_start_x, self.mouse_start_y), (event.x, event.y)), outline='red')
-        self.image_edited_lock.acquire()
-        self.image_edited = self.image_draw_mode.copy()
-        self.image_edited_lock.release()
+        self.poi_lock.acquire()
+        self.points_of_interest[-1] = [middle_point, crop_size]
+        self.poi_lock.release()
 
     def mouse_drag(self, event):
         if not self.reconfigure_mode:
             return
-        self.image_edited_lock.acquire()
-        self.image_edited = self.image_draw_mode.copy()
-        img2 = ImageDraw.Draw(self.image_edited)
-        img2.rectangle(((self.mouse_start_x, self.mouse_start_y), (event.x, event.y)), outline='red')
-        self.image_edited_lock.release()
+        crop_size = [self.mouse_start_x - event.x,
+                     self.mouse_start_y - event.y]
+        crop_size = [abs(crop_size[0]), abs(crop_size[1])]
+        middle_point = [int(self.mouse_start_x - (self.mouse_start_x - event.x) / 2),
+                        int(self.mouse_start_y - (self.mouse_start_y - event.y) / 2)]
+        self.poi_lock.acquire()
+        self.points_of_interest[-1][0] = middle_point
+        self.points_of_interest[-1][1] = crop_size
+        self.poi_lock.release()
 
     def connect(self):
         if not self.connected:
@@ -246,9 +255,15 @@ class Client:
             if not self.image_edited:
                 self.root.after(50, self.show_new_image)
                 return
-            self.image_edited_lock.acquire()
+            self.image_edited = self.image_draw_mode.copy()
+            img2 = ImageDraw.Draw(self.image_edited)
+            self.poi_lock.acquire()
+            for point in self.points_of_interest:
+                img2.rectangle(((int(point[0][0] - point[1][0] / 2), int(point[0][1] - point[1][1] / 2)),
+                                (int(point[0][0] + point[1][0] / 2), int(point[0][1] + point[1][1] / 2))),
+                               outline='red')
+            self.poi_lock.release()
             self.image_raw = self.image_edited.copy()
-            self.image_edited_lock.release()
 
         else:
             self.image_orig = self.tcp_client.get_next_image()
