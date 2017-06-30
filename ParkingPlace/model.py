@@ -20,6 +20,7 @@ class Model:
     img_size = 128
     layers = 3
     epochs = 10
+    image_channels = 1
     model = None
     debug = False
     model_name = 'default'
@@ -27,11 +28,12 @@ class Model:
     test_path = ''
     label_folders = {}
     labels = {}
-    shuffle = False
+    shuffle = True
+
 
     def __init__(self, label_folders, data_folder='./',
                    learning_rate=1e-3, img_size=128, layers=4,
-                   epochs=10, model_name=''):
+                   epochs=10, image_channels=1, model_name=''):
         if model_name == '':
             model_name = 'L' + str(layers) + 'R' + str(learning_rate) + 'E' + str(epochs)
         self.label_folders = label_folders
@@ -42,6 +44,7 @@ class Model:
         self.debug = False
         self.model_name = model_name
         self.data_folder = data_folder
+        self.image_channels = image_channels
 
         if not self.data_folder[-1] == '/':
             self.data_folder += '/'
@@ -51,10 +54,8 @@ class Model:
                 self.label_folders[i] += '/'
         self.conv_nn()
 
-
-
     def conv_nn(self):
-        convnet = input_data(shape=[None, self.img_size, self.img_size, 1], name='input')
+        convnet = input_data(shape=[None, self.img_size, self.img_size, self.image_channels], name='input')
 
         for _ in range(self.layers):
             convnet = conv_2d(convnet, 32, 2, activation='relu')
@@ -172,7 +173,7 @@ class Model:
         return training_data
 
     def save_data_set_partition(self, data, save_path):
-        np.save(save_path + self.model_name + '_train_data' + len(os.listdir(save_path)) + '.npy', data)
+        np.save(save_path + self.model_name + '_train_data' + str(len(os.listdir(save_path))) + '.npy', data)
 
     def load_saved_data_set(self, path):
         data = np.array([])

@@ -8,16 +8,16 @@ import requests
 import json
 import datetime
 
+start_time = time.time()
+time_elapsed = 0
 
 paths = ['/Car/', '/Park/']
 data_folder = "/media/cf2017/levy/tensorflow/parking_place/"
-mod = Model(paths, learning_rate=0.001, layers=4, epochs=200,
-           data_folder=data_folder, model_name='park_model15')
+mod = Model(paths, learning_rate=0.001, layers=8, epochs=25,
+           data_folder=data_folder, model_name='park_model' + str(18))
 #mod.save_settings()
-time_elapsed = 0
-start_time = time.time()
 mod.train_model(saved_train_data_path=data_folder+"park_model14/")
-print(str(time.time() - start_time))
+
 
 '''
 mod = Model.load_model(data_folder + "models/park_model14")
