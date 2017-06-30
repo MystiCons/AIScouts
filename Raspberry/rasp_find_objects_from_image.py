@@ -2,7 +2,7 @@ import os
 import time
 import pickle
 from PIL import Image
-from PIL import ImageDraw
+from PIL import ImageDraw, ImageFont
 import numpy as np
 class ObjectRecognition:
     crop_size = 128
@@ -25,6 +25,7 @@ class ObjectRecognition:
     cropping = False
     setupImage = None
     setupImage2 = None
+    font = None
 
     elapsed_time = 0
     start_time = 0
@@ -35,6 +36,7 @@ class ObjectRecognition:
         self.visualize = visualize
         self.auto_find = auto_find
         self.interesting = interesting_labels
+        self.font = ImageFont.truetype('/usr/share/fonts/truetype/roboto/Roboto-Bold.ttf', 16)
         for label in model.label_folders:
             self.labels_counts.update({label.split('/')[-2]: []})
 
@@ -104,7 +106,18 @@ class ObjectRecognition:
                     color = 'red'
                 else:
                     color = 'blue'
-                ret.rectangle(((int(key[0]-value[0]/2), int(key[1]-value[1]/2)), (int(key[0] + value[0]/2), int(key[1] + value[1]/2))), outline=color)
+                ret.rectangle(((int(key[0] - value[0]/2),
+                                int(key[1] - value[1]/2)),
+                               (int(key[0] + value[0]/2),
+                                int(key[1] + value[1]/2))),
+                              outline=color)
+                w, h = ret.textsize(str(i), font=self.font)
+                ret.ellipse(((int(key[0] - 10),
+                              int(key[1] - 10)),
+                             (int(key[0] + 10),
+                              int(key[1] + 10))),
+                            fill=(255,255,255))
+                ret.text((key[0] - w/2, key[1] - h/2), str(i), (0,0,0), font=self.font)
                 self.labels_counts[label].append(i)
             i += 1
         return image, self.labels_counts
