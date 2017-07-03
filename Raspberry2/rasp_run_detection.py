@@ -12,12 +12,10 @@ import base64
 import subprocess
 from io import BytesIO
 
-
-#ip = subprocess.getoutput("/sbin/ifconfig ppp0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'")
-#print(ip)
+ip = subprocess.getoutput("/sbin/ifconfig ppp0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'")
+print(ip)
 
 mod = Model.load_model("/home/pi/dev/AIScouts/ParkingPlace/models/park_model14")
-
 interesting_labels = ['Car', 'Park']
 objectrec = ObjectRecognition(mod, interesting_labels, auto_find=False, visualize=False)
 
