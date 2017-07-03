@@ -8,6 +8,9 @@ import sys
 from PIL import ImageTk
 import tkinter
 import pickle
+import os
+import numpy as np
+from rasp_model import Model
 
 
 class TCPClient:
@@ -16,6 +19,7 @@ class TCPClient:
     sock = None
     close = False
     latest_image = None
+    latest_orig_image = None
     images_lock = None
     socket_lock = None
 
@@ -91,9 +95,12 @@ class TCPClient:
                         except socket.error:
                             break
                     data = b''.join(chunks)
-                    img = Image.open(BytesIO(base64.b64decode(data)))
+                    images = pickle.loads(data)
+                    img = Image.open(BytesIO(base64.b64decode(images[0])))
+                    img_orig = Image.open(BytesIO(base64.b64decode(images[1])))
                     self.images_lock.acquire()
                     self.latest_image = img
+                    self.latest_orig_image = img_orig
                     self.images_lock.release()
                     self.sock.settimeout(10)
                 self.socket_lock.release()
@@ -115,7 +122,16 @@ class TCPClient:
 
     def get_next_image(self):
         self.images_lock.acquire()
+
         img = self.latest_image
+
+        self.images_lock.release()
+        return img
+
+    def get_next_image_orig(self):
+        self.images_lock.acquire()
+
+        img = self.latest_orig_image
 
         self.images_lock.release()
         return img
@@ -157,9 +173,11 @@ class Client:
     data_collection_mode = False
     points_of_interest = []
     points_of_interest_temp = []
-    collect_every_ms = 60000
+    collect_every_ms = 10000
+    model = None
 
-    def __init__(self):
+    def __init__(self, model=None):
+        self.model = model
         self.tcp_client = TCPClient()
         self.build_ui()
         self.panel.bind("<Button 1>", self.mouse_down)
@@ -207,10 +225,34 @@ class Client:
         if not self.image_draw_mode:
             self.image_orig_lock.acquire()
             if self.image_orig and self.data_collection_mode:
+                self.save_images_from_poi(self.tcp_client.get_next_image_orig(), '/media/cf2017/levy/tensorflow/parking_place/new_training_data/')
                 print('Collected data')
             self.image_orig_lock.release()
         self.root.after(self.collect_every_ms, self.collect_data)
         pass
+
+    def save_images_from_poi(self, image, path):
+        if not os.path.isdir(path):
+            os.mkdir(path)
+        # if start time hasn't been initialized
+        gray_image = image.convert('L')
+        image_array = np.asarray(gray_image)
+        for key, value in self.points_of_interest:
+            crop = image_array[int(key[1] - value[1] / 2):int(key[1] + value[1] / 2),
+                   int(key[0] - value[0] / 2):int(key[0] + value[0] / 2)]
+            img = Image.fromarray(crop, 'L')
+            if self.model:
+                label, confidence = self.model.predict(img)
+                if not os.path.isdir(path + label):
+                    os.mkdir(path + label)
+                dirlen = len(os.listdir(path + label))
+                img.save(path + label + '/' + str(dirlen + 1) + '.bmp')
+            else:
+                if not os.path.isdir(path + 'unsorted'):
+                    os.mkdir(path + 'unsorted')
+                dirlen = len(os.listdir(path + 'unsorted'))
+                img.save(path + 'unsorted/' + str(dirlen + 1) + '.bmp')
+
 
     def run_tk(self):
         self.root.mainloop()
@@ -344,7 +386,8 @@ class Client:
 
 
 def main():
-    client = Client()
+    mod = Model.load_model("/home/cf2017/PycharmProjects/AIScouts/AIScouts/ParkingPlace/models/park_model14")
+    client = Client(mod)
     client.run_tk()
 
 if __name__ == '__main__':

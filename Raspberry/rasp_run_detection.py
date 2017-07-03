@@ -60,8 +60,8 @@ try:
             objectrec.saved_poi = poi
             objectrec.save_poi('/home/pi/dev/AIScouts/ParkingPlace/points')
         t = time.time()
-
-        img, counts = objectrec.find_objects(camera.get_frame())
+        img_orig = camera.get_frame()
+        img, counts = objectrec.find_objects(img_orig)
 
         for key in counts:
             for v in counts[key]:
@@ -80,7 +80,7 @@ try:
                 for key in summed_counts:
                     key_counts.update({key: summed_counts[key].count(i)})
                 avg_counts[max(key_counts, key=key_counts.get)] += 1
-        server.send_data_to_all(img)
+        server.send_data_to_all(img, img_orig)
         if elapsed_time >= 60:
             elapsed_time = 0
             start_time = time.time()

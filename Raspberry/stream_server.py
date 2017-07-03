@@ -70,16 +70,21 @@ class StreamServer:
         except socket.error as e:
             print(e.strerror)
 
-    def send_data_to_all(self, data):
+    def send_data_to_all(self, data, data2):
         if len(self.connections) > 0:
             buffer = BytesIO()
+            buffer2 = BytesIO()
             data.save(buffer, format='JPEG')
+            data2.save(buffer2, format='JPEG')
             data_str = base64.b64encode(buffer.getvalue())
+            data_str2 = base64.b64encode(buffer2.getvalue())
+            send_data = [data_str, data_str2]
+            send_data = pickle.dumps(send_data)
             self.connections_lock.acquire()
             disconnected = []
             for addr in self.connections:
                 try:
-                    self.connections[addr].sendall(data_str)
+                    self.connections[addr].sendall(send_data)
                 except socket.error as e:
                     # Save key if disconnected
                     disconnected.append(addr)
