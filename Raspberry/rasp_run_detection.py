@@ -11,6 +11,7 @@ import threading
 import base64
 from io import BytesIO
 
+
 mod = Model.load_model("../ParkingPlace/models/park_model14")
 interesting_labels = ['Car', 'Park']
 objectrec = ObjectRecognition(mod, interesting_labels, auto_find=False, visualize=False)
@@ -37,7 +38,7 @@ try:
     server_launched = False
     while not server_launched:
         try:
-            server = StreamServer()
+            server = StreamServer(objectrec.saved_poi)
             server_launched = True
         except os.error as e:
             print(e.strerror)

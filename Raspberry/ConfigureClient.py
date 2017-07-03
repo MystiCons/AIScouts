@@ -33,16 +33,43 @@ class TCPClient:
             print('Connecting to ' + host + ':' + str(port))
             self.sock.connect((host, port))
             self.close = False
-            print('Connected!')
-            return True
+            return self.receive_poi()
         except socket.error as e:
             print('Connection failed! ' + e.strerror)
-            return False
 
     def disconnect(self):
         self.socket_lock.acquire()
         self.close = True
         self.socket_lock.release()
+
+    def receive_poi(self):
+        try:
+            poi = []
+            chunks = []
+            chunk = 0
+            try:
+                chunk = self.sock.recv(2048)
+            except socket.error:
+                pass
+            finally:
+                if chunk:
+                    chunks.append(chunk)
+                    while True:
+                        try:
+                            self.sock.settimeout(0.5)
+                            chunk = self.sock.recv(2048)
+                            if not chunk:
+                                break
+                            chunks.append(chunk)
+                        except socket.error:
+                            break
+                    data = b''.join(chunks)
+                    poi = pickle.loads(data)
+                    self.sock.settimeout(10)
+                    print('Received new points of interest!')
+        except socket.error as e:
+            traceback.print_exc(file=sys.stdout)
+        return poi
 
     def receive(self):
         try:
@@ -110,21 +137,27 @@ class Client:
     canvas = None
     frame = None
 
+    buttons_label = None
     ip_box = None
     port_box = None
     connect_button = None
     disconnect_button = None
     redraw_button = None
+    data_collect_button = None
     cancel_button = None
     connected = False
 
     poi_lock = threading.Lock()
+    image_orig_lock = threading.Lock()
 
     mouse_start_x = 0
     mouse_start_y = 0
 
     reconfigure_mode = False
+    data_collection_mode = False
     points_of_interest = []
+    points_of_interest_temp = []
+    collect_every_ms = 60000
 
     def __init__(self):
         self.tcp_client = TCPClient()
@@ -134,33 +167,50 @@ class Client:
         self.panel.bind('<B1-Motion>', self.mouse_drag)
         self.panel.bind('<ButtonRelease-1>', self.mouse_up)
         self.root.after(100, self.show_new_image)
+        self.root.after(self.collect_every_ms, self.collect_data)
 
     def build_ui(self):
         self.root = tkinter.Tk()
         self.root.title('Configuration')
         self.root.geometry('1440x900')
-        self.root.resizable(False, False)
+        self.root.resizable(True, True)
+        self.buttons_label = tkinter.Label(self.root)
+        self.buttons_label.grid(sticky=tkinter.E)
         self.panel = tkinter.Label(self.root)
-        self.panel.pack()
+        self.panel.grid(columnspan=40, row=0, column=1, sticky=tkinter.W)
 
         self.ip_box = tkinter.Entry(self.root)
-        self.ip_box.pack()
+        self.ip_box.grid(row=1, column=1)
         self.ip_box.delete(0, tkinter.END)
         self.ip_box.insert(0, "192.168.51.131")
 
         self.port_box = tkinter.Entry(self.root)
-        self.port_box.pack()
+        self.port_box.grid(row=1, column=2)
         self.port_box.delete(0, tkinter.END)
         self.port_box.insert(0, "1337")
 
         self.connect_button = tkinter.Button(self.root, text="Connect", width=10, command=self.connect)
-        self.connect_button.pack()
+        self.connect_button.grid(row=1, column=3)
 
         self.disconnect_button = tkinter.Button(self.root, text="Disconnect", width=10, command=self.disconnect)
-        self.disconnect_button.pack()
+        self.disconnect_button.grid(row=1, column=4)
 
         self.redraw_button = tkinter.Button(self.root, text="Draw new parks", width=10, command=self.redraw)
-        self.redraw_button.pack()
+        self.redraw_button.grid(row=1, column=5)
+
+        self.data_collect_button = tkinter.Button(self.root, text="Start collecting data", width=20, command=self.collect_toggle)
+        self.data_collect_button.grid(row=1, column=6)
+
+    def collect_data(self):
+        if self.data_collection_mode and not self.connected:
+            self.collect_toggle()
+        if not self.image_draw_mode:
+            self.image_orig_lock.acquire()
+            if self.image_orig and self.data_collection_mode:
+                print('Collected data')
+            self.image_orig_lock.release()
+        self.root.after(self.collect_every_ms, self.collect_data)
+        pass
 
     def run_tk(self):
         self.root.mainloop()
@@ -174,6 +224,14 @@ class Client:
         self.reconfigure_mode = False
         self.cancel_button.destroy()
 
+    def collect_toggle(self):
+        if not self.data_collection_mode and self.connected:
+            self.data_collect_button.configure(text="Stop collecting data")
+            self.data_collection_mode = True
+        else:
+            self.data_collect_button.configure(text="Start collecting data")
+            self.data_collection_mode = False
+
     def redraw(self):
         if not self.reconfigure_mode:
             if not self.image_orig:
@@ -182,31 +240,33 @@ class Client:
             self.image_edited = self.image_orig.copy()
             self.reconfigure_mode = True
             self.poi_lock.acquire()
-            self.points_of_interest.clear()
+            self.points_of_interest_temp.clear()
             self.poi_lock.release()
             self.redraw_button.configure(text="Stop and send")
             self.cancel_button = tkinter.Button(self.root, text="Cancel drawing", width=10, command=self.cancel_redraw)
-            self.cancel_button.pack()
+            self.cancel_button.grid(column=5, row=2)
         else:
             self.cancel_redraw()
             self.poi_lock.acquire()
-            self.tcp_client.send_data(self.points_of_interest)
             self.points_of_interest.clear()
+            self.points_of_interest = self.points_of_interest_temp.copy()
+            self.tcp_client.send_data(self.points_of_interest)
+            self.points_of_interest_temp.clear()
             self.poi_lock.release()
 
     def mouse2_down(self, event):
         if not self.reconfigure_mode:
             return
         self.poi_lock.acquire()
-        if len(self.points_of_interest) > 0:
-            del self.points_of_interest[-1]
+        if len(self.points_of_interest_temp) > 0:
+            del self.points_of_interest_temp[-1]
         self.poi_lock.release()
 
     def mouse_down(self, event):
         if not self.reconfigure_mode:
             return
         self.poi_lock.acquire()
-        self.points_of_interest.append([[event.x, event.y], [0, 0]])
+        self.points_of_interest_temp.append([[event.x, event.y], [0, 0]])
         self.poi_lock.release()
         self.mouse_start_x = event.x
         self.mouse_start_y = event.y
@@ -220,7 +280,7 @@ class Client:
         middle_point = [int(self.mouse_start_x - (self.mouse_start_x - event.x) / 2),
                         int(self.mouse_start_y - (self.mouse_start_y - event.y) / 2)]
         self.poi_lock.acquire()
-        self.points_of_interest[-1] = [middle_point, crop_size]
+        self.points_of_interest_temp[-1] = [middle_point, crop_size]
         self.poi_lock.release()
 
     def mouse_drag(self, event):
@@ -232,19 +292,23 @@ class Client:
         middle_point = [int(self.mouse_start_x - (self.mouse_start_x - event.x) / 2),
                         int(self.mouse_start_y - (self.mouse_start_y - event.y) / 2)]
         self.poi_lock.acquire()
-        self.points_of_interest[-1][0] = middle_point
-        self.points_of_interest[-1][1] = crop_size
+        self.points_of_interest_temp[-1][0] = middle_point
+        self.points_of_interest_temp[-1][1] = crop_size
         self.poi_lock.release()
 
     def connect(self):
         if not self.connected:
             ip = self.ip_box.get()
             port = int(self.port_box.get())
-            if self.tcp_client.connect(ip, port):
+            self.points_of_interest = self.tcp_client.connect(ip, port)
+            if self.points_of_interest:
+                print('Connected!')
                 thread = threading.Thread(target=self.tcp_client.receive)
                 thread.daemon = True
                 thread.start()
                 self.connected = True
+            else:
+                print('Could not receive points of interest!')
 
     def disconnect(self):
         self.connected = False
@@ -258,7 +322,7 @@ class Client:
             self.image_edited = self.image_draw_mode.copy()
             img2 = ImageDraw.Draw(self.image_edited)
             self.poi_lock.acquire()
-            for point in self.points_of_interest:
+            for point in self.points_of_interest_temp:
                 img2.rectangle(((int(point[0][0] - point[1][0] / 2), int(point[0][1] - point[1][1] / 2)),
                                 (int(point[0][0] + point[1][0] / 2), int(point[0][1] + point[1][1] / 2))),
                                outline='red')
@@ -266,9 +330,11 @@ class Client:
             self.image_raw = self.image_edited.copy()
 
         else:
+            self.image_orig_lock.acquire()
             self.image_orig = self.tcp_client.get_next_image()
             if self.image_orig:
                 self.image_raw = self.image_orig.copy()
+            self.image_orig_lock.release()
         if self.image_raw:
             # tkinter requires the image to be saved
             self.photo_image = ImageTk.PhotoImage(self.image_raw)

@@ -19,8 +19,9 @@ class StreamServer:
     poi = []
     poi_lock = threading.Lock()
 
-    def __init__(self):
+    def __init__(self, poi):
         self.sock = socket.socket()
+        self.poi = poi
         self.sock.bind((self.host, self.port))
         # Set accept timeout to 60 sec
         socket.setdefaulttimeout(30)
@@ -46,6 +47,7 @@ class StreamServer:
                     self.connections_lock.acquire()
                     self.connections.update({addr[0]: conn})
                     self.connections_lock.release()
+                    self.send_data(self.poi)
                     client_thread = threading.Thread(target=self.receive_poi, args=(conn, addr))
                     client_thread.daemon = True
                     client_thread.start()
@@ -60,6 +62,13 @@ class StreamServer:
 
     def close(self):
         self.sock.close()
+
+    def send_data(self, data):
+        try:
+            data_string = pickle.dumps(data)
+            self.sock.sendall(data_string)
+        except socket.error as e:
+            print(e.strerror)
 
     def send_data_to_all(self, data):
         if len(self.connections) > 0:
