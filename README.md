@@ -1,31 +1,18 @@
 # AIScouts
 
-In this repository we have different type of tools and programs related to AI.
-
-Folder names are given after the specified subject.   
-More information about specific subject is written inside subject's folder.
+**AIScouts** is a team of two members, whom try to map the possibilities of machine learning and computer vision.   
+The main challenge of the team is to create a sensor which detects cars on a parking place and counts the free parks.   
+The parking place challenge is done with [tensorflow](https://www.tensorflow.org/) and python 3. To create fast prototypes we use [tflearn](http://tflearn.org/) which is a higher-level API for tensorflow.   
 
 ---
 
-**BBControl** includes python scripts to control BB8 robot
-(for the controlling device (e.g. computer) and the end device.)
+There are two versions of the detection system:
+**The First** version runs completely on raspberry pi, but requires configuration by the user to determine where the parks are. This is done by ConfigureClient.py which allows the user to connect to the raspberry pi through tcp server-client system. ConfigureClient can also collect images from the configured parks (Used as training data). This version uses Pillow to manipulate the images.   
+   
+**The second** version runs on a server, which fetches images from an ip camera. This version uses opencv to manipulate the images.    
 
-**CarControl** includes similiar scripts as **BBControl** but it allows controlling of the "robot car".
+**Robotics** directory has BB-8 (Sphero) toy robots control scripts and a custom robot (Raspberry pi) control script.   
 
-**DataGathering** folder includes two different python scripts for capturing images.
-* **ImageScraper** asks keyword(s) for images to be downloaded from the Internet,
-and then saves them in specified folder.
-* **VideoToImages** reads videofile, and then saves frames from the video into images.
-
-
-**ParkingPlace** folder also includes two separate python scripts scripts:
-* **ImageRecognition** script is for cutting images into smaller images,
-which then can be used as learning material (for Tensorflow).
-* **TFTrainSinglePark** script is used to teach Tensorflow to detect,
-if given image is a parking spot or if it isn't.
-
-
-**Raspberry** folder includes scripts to be used in Raspberry Pi.
- **Picture_capture** script takes pictures with picam.
+**Utils** has a toolkit we used to gather data and anything which helped our jobs.   
 
 ---

@@ -95,14 +95,18 @@ class TCPClient:
                         except socket.error:
                             break
                     data = b''.join(chunks)
-                    images = pickle.loads(data)
-                    img = Image.open(BytesIO(base64.b64decode(images[0])))
-                    img_orig = Image.open(BytesIO(base64.b64decode(images[1])))
-                    self.images_lock.acquire()
-                    self.latest_image = img
-                    self.latest_orig_image = img_orig
-                    self.images_lock.release()
-                    self.sock.settimeout(10)
+                    try:
+                        images = pickle.loads(data)
+                        img = Image.open(BytesIO(base64.b64decode(images[0])))
+                        img_orig = Image.open(BytesIO(base64.b64decode(images[1])))
+                        self.images_lock.acquire()
+                        self.latest_image = img
+                        self.latest_orig_image = img_orig
+                        self.images_lock.release()
+                    except Exception as e:
+                        print('Image receiving failed.')
+                    finally:
+                        self.sock.settimeout(10)
                 self.socket_lock.release()
                 if self.close:
                     break
@@ -173,7 +177,7 @@ class Client:
     data_collection_mode = False
     points_of_interest = []
     points_of_interest_temp = []
-    collect_every_ms = 10000
+    collect_every_ms = 120000
     model = None
 
     def __init__(self, model=None):
@@ -386,7 +390,7 @@ class Client:
 
 
 def main():
-    mod = Model.load_model("/home/cf2017/PycharmProjects/AIScouts/AIScouts/ParkingPlace/models/park_model14")
+    mod = Model.load_model("/home/cf2017/PycharmProjects/AIScouts/AIScouts/IPCameraDetection/models/park_model14")
     client = Client(mod)
     client.run_tk()
 

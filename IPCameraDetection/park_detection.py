@@ -8,8 +8,6 @@ import requests
 import json
 import datetime
 
-start_time = time.time()
-time_elapsed = 0
 
 paths = ['/Car/', '/Park/']
 data_folder = "/media/cf2017/levy/tensorflow/parking_place/"
@@ -19,7 +17,6 @@ mod = Model(paths, learning_rate=0.001, layers=8, epochs=25,
 mod.train_model(saved_train_data_path=data_folder+"park_model14/")
 
 
-'''
 mod = Model.load_model(data_folder + "models/park_model14")
 #mod.test_model()
 camera1 = IpCamera('http://192.168.51.207/cam_pic.php', user='User', password='Salasana1')
@@ -100,7 +97,7 @@ while True:
         except Exception:
             print('Could not connect to thingsboard! ' + str(datetime.datetime.now()))
 
-'''
+
 
 
 

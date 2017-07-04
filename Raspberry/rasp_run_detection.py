@@ -16,7 +16,7 @@ from io import BytesIO
 #ip = subprocess.getoutput("/sbin/ifconfig ppp0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'")
 #print(ip)
 
-mod = Model.load_model("/home/pi/dev/AIScouts/ParkingPlace/models/park_model14")
+mod = Model.load_model("/home/pi/dev/AIScouts/IPCameraDetection/models/park_model14")
 
 interesting_labels = ['Car', 'Park']
 objectrec = ObjectRecognition(mod, interesting_labels, auto_find=False, visualize=False)
@@ -38,7 +38,7 @@ r = requests.post('http://192.168.51.140:8080/api/v1/Eo8KxecNVvn9AVg3VXjS/teleme
 
 count = 0
 try:
-    objectrec.load_poi('/home/pi/dev/AIScouts/ParkingPlace/points')
+    objectrec.load_poi('/home/pi/dev/AIScouts/IPCameraDetection/points')
 except Exception:
     print('Points of interest couldnt be loaded, trying to auto find')
 
@@ -58,10 +58,10 @@ try:
         if server.received_data:
             poi = server.get_poi()
             objectrec.saved_poi = poi
-            objectrec.save_poi('/home/pi/dev/AIScouts/ParkingPlace/points')
+            objectrec.save_poi('/home/pi/dev/AIScouts/IPCameraDetection/points')
         t = time.time()
         img_orig = camera.get_frame()
-        img, counts = objectrec.find_objects(img_orig)
+        img, counts = objectrec.find_objects(img_orig.copy())
 
         for key in counts:
             for v in counts[key]:
