@@ -28,7 +28,7 @@ class Model:
     test_path = ''
     label_folders = {}
     labels = {}
-    shuffle = True
+    shuffle = False
 
 
     def __init__(self, label_folders, data_folder='./',
