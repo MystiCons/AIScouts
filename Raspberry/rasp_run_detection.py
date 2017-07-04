@@ -13,8 +13,11 @@ import subprocess
 from io import BytesIO
 
 
-#ip = subprocess.getoutput("/sbin/ifconfig ppp0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'")
+ip = subprocess.getoutput("/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'")
 #print(ip)
+
+token = 'gngqqCwoYPqr5qWmUw8v'
+token2 = 'Eo8KxecNVvn9AVg3VXjS'
 
 mod = Model.load_model("/home/pi/dev/AIScouts/IPCameraDetection/models/park_model14")
 
@@ -33,8 +36,9 @@ for label in interesting_labels:
     summed_counts.update({label: []})
     avg_counts.update({label: 0})
 
-r = requests.post('http://192.168.51.140:8080/api/v1/Eo8KxecNVvn9AVg3VXjS/telemetry',
-                                  data=json.dumps({'pppAdress': ip}))
+r = requests.post('http://192.168.51.140:8080/api/v1/'+token+'/attributes',
+                                  data=json.dumps({'ipAddress': ip}))
+
 
 count = 0
 try:
@@ -95,9 +99,9 @@ try:
                         if key == 'Park':
                             value = 1
                         data.update({str(park): value})
-                r = requests.post('http://192.168.51.140:8080/api/v1/Eo8KxecNVvn9AVg3VXjS/telemetry',
+                r = requests.post('http://192.168.51.140:8080/api/v1/'+token+'/telemetry',
                                   data=json.dumps(data))
-                r = requests.post('http://192.168.51.140:8080/api/v1/Eo8KxecNVvn9AVg3VXjS/attributes',
+                r = requests.post('http://192.168.51.140:8080/api/v1/'+token+'/attributes',
                                   data=json.dumps({'image': str(img_str)}))
                 print(data)
 
