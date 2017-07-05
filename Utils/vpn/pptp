@@ -1,0 +1,19 @@
+#!/bin/sh
+case "$1" in
+  start)
+sleep 10
+pon labranet
+    python3 /home/pi/dev/AIScouts/Raspberry/rasp_run_detection.py
+    echo "PPTP Started"
+    ;;
+  stop)
+    poff labranet
+    echo "PPTP Stopped"
+    ;;
+  *)
+    echo "Usage: /etc/init.d/pptp {start|stop}"
+    exit 1
+    ;;
+esac
+
+exit 0
