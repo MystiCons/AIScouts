@@ -90,22 +90,23 @@ class DataManipulation:
 
 
 if __name__ == '__main__':
-    inp = "/media/cf2017/levy/tensorflow/parking_place/new_training_data/"
+    inp = "/media/cf2017/levy/tensorflow/parking_place/clustered_images/"
     out = "/media/cf2017/levy/tensorflow/parking_place/new_training_data/"
     #mod = Model.load_model("/media/cf2017/levy/tensorflow/images/" + "models/testi1")
+
     #mod.try_cluster_training_data("/media/cf2017/levy/tensorflow/images/new_training_data/", 2)
     #mod.color_quantization(mod.data_folder + 'clustered_images/A/', mod.data_folder + 'clustered_images/A/')
     manipulator = DataManipulation("/media/cf2017/levy/tensorflow/parking_place/")
-    #manipulator.try_cluster_training_data("/media/cf2017/levy/tensorflow/parking_place/new_training_data/", 3)
-    #manipulator.color_quantization(inp + "Parks/", 24, 128, save_images_path=inp + "Parks/")
-    #manipulator.color_quantization(inp + "Parks/", 16, 128, save_images_path=inp + "Parks/")
+    #manipulator.try_cluster_training_data("/media/cf2017/levy/tensorflow/parking_place/new_training_data/Park/", 3)
+    manipulator.color_quantization(inp + "new_parks/", 24, 128, save_images_path=inp + "new_parks/")
+    manipulator.color_quantization(inp + "new_parks/", 16, 128, save_images_path=inp + "new_parks/")
     #manipulator.color_quantization(inp + "Parks/", 12, 128, save_images_path=inp + "Parks/")
-    #manipulator.color_quantization(inp + "Cars/", 16, 128, save_images_path=inp + "Cars/")
-    #manipulator.color_quantization(inp + "Cars/", 12, 128, save_images_path=inp + "Cars/")
-    manipulator.color_quantization(inp + "Cars/", 6, 128, save_images_path=inp + "Cars/")
+    manipulator.color_quantization(inp + "new_cars/", 16, 128, save_images_path=inp + "new_cars/")
+    manipulator.color_quantization(inp + "new_cars/", 12, 128, save_images_path=inp + "new_cars/")
+    manipulator.color_quantization(inp + "new_cars/", 6, 128, save_images_path=inp + "new_cars/")
 
 
-    #manipulator.flip_images(inp + "Parks/", inp + "temp_parks/", 128)
-    manipulator.flip_images(inp + "Cars/", inp + "temp_cars/", 128)
+    manipulator.flip_images(inp + "new_parks/", inp + "temp_parks/", 128)
+    manipulator.flip_images(inp + "new_cars/", inp + "temp_cars/", 128)
 
 

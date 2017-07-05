@@ -6,7 +6,7 @@ The parking place challenge is done with [tensorflow](https://www.tensorflow.org
 
 ---
 
-There are two versions of the detection system:   
+There are two versions of the detection system:
 **The First** version runs completely on raspberry pi, but requires configuration by the user to determine where the parks are. This is done by ConfigureClient.py which allows the user to connect to the raspberry pi through tcp server-client system. ConfigureClient can also collect images from the configured parks (Used as training data). This version uses Pillow to manipulate the images.   
    
 **The second** version runs on a server, which fetches images from an ip camera. This version uses opencv to manipulate the images.    
