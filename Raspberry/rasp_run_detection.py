@@ -12,10 +12,16 @@ import base64
 import subprocess
 from io import BytesIO
 
+
+file = open('/home/pi/asd', 'a')
+file.write('started')
+
 ip = subprocess.getoutput("/sbin/ifconfig wlan0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'")
 if '192' or '172' not in ip:
     ip = subprocess.getoutput("/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'")
 ip2 = subprocess.getoutput("/sbin/ifconfig ppp0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'")
+
+file.write('found ips')
 #print(ip)
 
 token = 'gngqqCwoYPqr5qWmUw8v'
@@ -41,11 +47,13 @@ for label in interesting_labels:
     summed_counts.update({label: []})
     avg_counts.update({label: 0})
 
+file.write('sending ips')
+
 r = requests.post('http://192.168.51.140:8080/api/v1/'+curr_token+'/attributes',
                                   data=json.dumps({'ipAddress': ip}))
 r = requests.post('http://192.168.51.140:8080/api/v1/'+curr_token+'/attributes',
                                   data=json.dumps({'vpnAddress': ip2}))
-
+file.write('sent ips')
 
 count = 0
 try:

@@ -153,7 +153,7 @@ class Model:
                     print('failed to load image: ' + path2)
                 iteration += 1
                 if iteration > 40000:
-                    if training_data.size == 0:
+                    if len(training_data) == 0:
                         training_data = data.copy()
                     else:
                         training_data = np.concatenate((training_data, data))
@@ -163,7 +163,7 @@ class Model:
             count += 1
         # Save excess data
         if not iteration == 0:
-            if training_data.size == 0:
+            if len(training_data) == 0:
                 training_data = data
             else:
                 training_data = np.concatenate((training_data, data))
