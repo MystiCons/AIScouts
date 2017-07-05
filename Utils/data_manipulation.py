@@ -98,12 +98,12 @@ if __name__ == '__main__':
     #mod.color_quantization(mod.data_folder + 'clustered_images/A/', mod.data_folder + 'clustered_images/A/')
     manipulator = DataManipulation("/media/cf2017/levy/tensorflow/parking_place/")
     #manipulator.try_cluster_training_data("/media/cf2017/levy/tensorflow/parking_place/new_training_data/Park/", 3)
-    manipulator.color_quantization(inp + "new_parks/", 24, 128, save_images_path=inp + "new_parks/")
-    manipulator.color_quantization(inp + "new_parks/", 16, 128, save_images_path=inp + "new_parks/")
+    #manipulator.color_quantization(inp + "new_parks/", 24, 128, save_images_path=inp + "new_parks/")
+    #manipulator.color_quantization(inp + "new_parks/", 16, 128, save_images_path=inp + "new_parks/")
     #manipulator.color_quantization(inp + "Parks/", 12, 128, save_images_path=inp + "Parks/")
-    manipulator.color_quantization(inp + "new_cars/", 16, 128, save_images_path=inp + "new_cars/")
-    manipulator.color_quantization(inp + "new_cars/", 12, 128, save_images_path=inp + "new_cars/")
-    manipulator.color_quantization(inp + "new_cars/", 6, 128, save_images_path=inp + "new_cars/")
+    #manipulator.color_quantization(inp + "new_cars/", 16, 128, save_images_path=inp + "new_cars/")
+    #manipulator.color_quantization(inp + "new_cars/", 12, 128, save_images_path=inp + "new_cars/")
+    #manipulator.color_quantization(inp + "new_cars/", 6, 128, save_images_path=inp + "new_cars/")
 
 
     manipulator.flip_images(inp + "new_parks/", inp + "temp_parks/", 128)
