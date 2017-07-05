@@ -29,13 +29,14 @@ token2 = 'Eo8KxecNVvn9AVg3VXjS'
 token3 = 'gAr2fUXsBYuPUMyCUF7F'
 
 curr_token = token3
-
+file.write('loading model')
 mod = Model.load_model("/home/pi/dev/AIScouts/IPCameraDetection/models/park_model14")
-
+file.write('model loaded')
 interesting_labels = ['Car', 'Park']
 objectrec = ObjectRecognition(mod, interesting_labels, auto_find=False, visualize=False)
-
+file.write('objectrec created')
 camera = Camera()
+file.write('camera created')
 start_time = time.time()
 elapsed_time = 0
 start_time2 = time.time()
@@ -46,6 +47,7 @@ avg_counts = {}
 for label in interesting_labels:
     summed_counts.update({label: []})
     avg_counts.update({label: 0})
+
 
 file.write('sending ips')
 
