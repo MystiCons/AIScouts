@@ -36,7 +36,7 @@ class ObjectRecognition:
         self.visualize = visualize
         self.auto_find = auto_find
         self.interesting = interesting_labels
-        self.font = ImageFont.truetype('./DejaVuSans-Bold.ttf', 16)
+        self.font = ImageFont.truetype('/home/pi/dev/AIScouts/Raspberry/DejaVuSans-Bold.ttf', 16)
         for label in model.label_folders:
             self.labels_counts.update({label.split('/')[-2]: []})
 

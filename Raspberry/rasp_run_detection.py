@@ -13,15 +13,11 @@ import subprocess
 from io import BytesIO
 
 
-file = open('/home/pi/asd', 'a')
-file.write('started')
-
 ip = subprocess.getoutput("/sbin/ifconfig wlan0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'")
 if '192' or '172' not in ip:
     ip = subprocess.getoutput("/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'")
 ip2 = subprocess.getoutput("/sbin/ifconfig ppp0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'")
 
-file.write('found ips')
 #print(ip)
 
 token = 'gngqqCwoYPqr5qWmUw8v'
@@ -29,14 +25,14 @@ token2 = 'Eo8KxecNVvn9AVg3VXjS'
 token3 = 'gAr2fUXsBYuPUMyCUF7F'
 
 curr_token = token3
-file.write('loading model')
+
 mod = Model.load_model("/home/pi/dev/AIScouts/IPCameraDetection/models/park_model14")
-file.write('model loaded')
+
 interesting_labels = ['Car', 'Park']
 objectrec = ObjectRecognition(mod, interesting_labels, auto_find=False, visualize=False)
-file.write('objectrec created')
+
 camera = Camera()
-file.write('camera created')
+
 start_time = time.time()
 elapsed_time = 0
 start_time2 = time.time()
@@ -49,13 +45,13 @@ for label in interesting_labels:
     avg_counts.update({label: 0})
 
 
-file.write('sending ips')
+
 
 r = requests.post('http://192.168.51.140:8080/api/v1/'+curr_token+'/attributes',
                                   data=json.dumps({'ipAddress': ip}))
 r = requests.post('http://192.168.51.140:8080/api/v1/'+curr_token+'/attributes',
                                   data=json.dumps({'vpnAddress': ip2}))
-file.write('sent ips')
+
 
 count = 0
 try:
