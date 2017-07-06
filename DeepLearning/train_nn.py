@@ -1,4 +1,4 @@
-from model import Model
+from DeepLearning.model import Model
 
 paths = ['/Car/', '/Park/']
 data_folder = "/media/cf2017/levy/tensorflow/parking_place2/"
