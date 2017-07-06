@@ -10,6 +10,7 @@ There are two versions of the detection system:
 **The First** version ([RaspberryVersion](https://github.com/MystiCons/AIScouts/tree/master/RaspberryVersion)) runs completely on raspberry pi but requires configuration by the user to determine where the parks are. This is done by ConfigureClient.py which allows the user to connect to the raspberry pi through TCP server-client system. ConfigureClient can also collect images from the configured parks (Used as training data). This version uses Pillow to manipulate the images.   
    
 **The second** version ([IPCameraVersion](https://github.com/MystiCons/AIScouts/tree/master/IPCameraVersion)) runs on a server, which fetches images from an IP camera. This version uses OpenCV 2 to manipulate the images.   
+We used [Raspberry PI as an IP Camera.](https://github.com/silvanmelchior/RPi_Cam_Web_Interface)    
 
 **DeepLearning** directory has our training scripts and model class. The model class describes the neural network model which can be saved and loaded in different scripts without writing the model again.    
 There's a simple version (rasp_model.py) and full version (model.py).    
