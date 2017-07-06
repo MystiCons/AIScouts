@@ -2,7 +2,7 @@
 
 **AIScouts** is a team of two members, who try to map the possibilities of machine learning and computer vision.   
 The main challenge of the team is to create a sensor which detects cars on a parking place and counts the free parks.   
-The parking place challenge is done with [tensorflow](https://www.tensorflow.org/) and Python 3. To create fast prototypes we use [tflearn](http://tflearn.org/) which is a higher-level API for tensorflow.   
+The parking place challenge is done with [Tensorflow](https://www.tensorflow.org/) and Python 3. To create fast prototypes we use [tflearn](http://tflearn.org/) which is a higher-level API for Tensorflow.   
 
 ---
 
