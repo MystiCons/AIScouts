@@ -1,16 +1,26 @@
+import sys
+import os
+PACKAGE_PARENT = '..'
+SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__))))
+sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
 import socket
 import threading
 import base64
 from io import BytesIO
 from PIL import Image, ImageDraw
 import traceback
-import sys
 from PIL import ImageTk
 import tkinter
 import pickle
-import os
+
 import numpy as np
-from rasp_model import Model
+from DeepLearning.rasp_model import Model
+
+
+try:
+    import cv2
+except ImportError:
+    print('Cv2 could not be imported.')
 
 
 class TCPClient:
@@ -22,12 +32,13 @@ class TCPClient:
     latest_orig_image = None
     images_lock = None
     socket_lock = None
+    poi_lock = None
 
     def __init__(self):
         self.init_socket()
         self.images_lock = threading.Lock()
         self.socket_lock = threading.Lock()
-
+        self.poi_lock = threading.Lock()
     def init_socket(self):
         self.sock = socket.socket()
         socket.setdefaulttimeout(30)
@@ -177,7 +188,7 @@ class Client:
     data_collection_mode = False
     points_of_interest = []
     points_of_interest_temp = []
-    collect_every_ms = 120000
+    collect_every_ms = 1000
     model = None
 
     def __init__(self, model=None):
@@ -204,7 +215,7 @@ class Client:
         self.ip_box = tkinter.Entry(self.root)
         self.ip_box.grid(row=1, column=1)
         self.ip_box.delete(0, tkinter.END)
-        self.ip_box.insert(0, "192.168.51.131")
+        self.ip_box.insert(0, "192.168.53.")
 
         self.port_box = tkinter.Entry(self.root)
         self.port_box.grid(row=1, column=2)
@@ -390,7 +401,7 @@ class Client:
 
 
 def main():
-    mod = Model.load_model("/home/cf2017/PycharmProjects/AIScouts/AIScouts/IPCameraDetection/models/park_model14")
+    mod = Model.load_model("/home/cf2017/PycharmProjects/AIScouts/AIScouts/DeepLearning/models/park_model22")
     client = Client(mod)
     client.run_tk()
 

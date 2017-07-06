@@ -1,7 +1,12 @@
-from rasp_model import Model
-from rasp_find_objects_from_image import ObjectRecognition
-from Camera import Camera
-from stream_server import StreamServer
+import sys
+import os
+PACKAGE_PARENT = '..'
+SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__))))
+sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
+from DeepLearning.rasp_model import Model
+from Raspberry.rasp_find_objects_from_image import ObjectRecognition
+from Raspberry.Camera import Camera
+from Raspberry.stream_server import StreamServer
 import time
 import requests
 import json
@@ -26,7 +31,7 @@ token3 = 'gAr2fUXsBYuPUMyCUF7F'
 
 curr_token = token3
 
-mod = Model.load_model("/home/pi/dev/AIScouts/IPCameraDetection/models/park_model14")
+mod = Model.load_model("/home/pi/dev/AIScouts/DeepLearning/models/park_model14")
 
 interesting_labels = ['Car', 'Park']
 objectrec = ObjectRecognition(mod, interesting_labels, auto_find=False, visualize=False)

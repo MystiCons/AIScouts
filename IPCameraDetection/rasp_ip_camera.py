@@ -4,6 +4,8 @@ from PIL import Image
 import numpy as np
 from io import BytesIO
 
+# Pillow version of IPCamera capture
+
 class IpCamera:
     user = None
     password = None
@@ -25,6 +27,4 @@ class IpCamera:
         feed = self.response.read()
         img_array = np.asarray(bytearray(feed), dtype=np.uint8)
         frame = Image.open(BytesIO(img_array))
-
-        #frame = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
         return frame
