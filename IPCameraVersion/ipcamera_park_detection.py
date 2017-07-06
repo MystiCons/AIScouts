@@ -4,8 +4,8 @@ PACKAGE_PARENT = '..'
 SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__))))
 sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
 from DeepLearning.model import Model
-from IPCameraDetection.find_objects_from_image import ObjectRecognition
-from IPCameraDetection.capture_ip_camera import IpCamera
+from IPCameraVersion.find_objects_from_image import ObjectRecognition
+from IPCameraVersion.capture_ip_camera import IpCamera
 import time
 import cv2
 import os

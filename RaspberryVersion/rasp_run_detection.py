@@ -4,9 +4,9 @@ PACKAGE_PARENT = '..'
 SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__))))
 sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
 from DeepLearning.rasp_model import Model
-from Raspberry.rasp_find_objects_from_image import ObjectRecognition
-from Raspberry.Camera import Camera
-from Raspberry.stream_server import StreamServer
+from RaspberryVersion.rasp_find_objects_from_image import ObjectRecognition
+from RaspberryVersion.Camera import Camera
+from RaspberryVersion.stream_server import StreamServer
 import time
 import requests
 import json
@@ -31,7 +31,7 @@ token3 = 'gAr2fUXsBYuPUMyCUF7F'
 
 curr_token = token3
 
-mod = Model.load_model("/home/pi/dev/AIScouts/DeepLearning/models/park_model14")
+mod = Model.load_model("/home/pi/dev/AIScouts/DeepLearning/models/park_model22")
 
 interesting_labels = ['Car', 'Park']
 objectrec = ObjectRecognition(mod, interesting_labels, auto_find=False, visualize=False)
@@ -60,7 +60,7 @@ r = requests.post('http://192.168.51.140:8080/api/v1/'+curr_token+'/attributes',
 
 count = 0
 try:
-    objectrec.load_poi('/home/pi/dev/AIScouts/IPCameraDetection/points')
+    objectrec.load_poi('/home/pi/dev/AIScouts/IPCameraVersion/points')
 except Exception:
     print('Points of interest couldnt be loaded, trying to auto find')
 
@@ -80,7 +80,7 @@ try:
         if server.received_data:
             poi = server.get_poi()
             objectrec.saved_poi = poi
-            objectrec.save_poi('/home/pi/dev/AIScouts/IPCameraDetection/points')
+            objectrec.save_poi('/home/pi/dev/AIScouts/IPCameraVersion/points')
         t = time.time()
         img_orig = camera.get_frame()
         img, counts = objectrec.find_objects(img_orig.copy())
