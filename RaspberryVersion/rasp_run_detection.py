@@ -1,3 +1,5 @@
+file = open('/home/pi/asd', 'a')
+file.write('\nStarted')
 import sys
 import os
 PACKAGE_PARENT = '..'
@@ -17,7 +19,7 @@ import base64
 import subprocess
 from io import BytesIO
 import traceback
-
+file.write('\nImported')
 token = 'gngqqCwoYPqr5qWmUw8v'
 token2 = 'Eo8KxecNVvn9AVg3VXjS'
 token3 = 'gAr2fUXsBYuPUMyCUF7F'
@@ -33,15 +35,15 @@ try:
                                       data=json.dumps({'ipAddress': ip}))
     r = requests.post('http://192.168.51.140:8080/api/v1/'+curr_token+'/attributes',
                                       data=json.dumps({'vpnAddress': ip2}))
-
+    file.write('\nSend Ips')
     #print(ip)
     mod = Model.load_model("/home/pi/dev/AIScouts/DeepLearning/models/park_model22")
-
+    file.write('\nLoaded model')
     interesting_labels = ['Car', 'Park']
     objectrec = ObjectRecognition(mod, interesting_labels, auto_find=False, visualize=False)
-
+    file.write('\nCreated objectrec')
     camera = Camera()
-
+    file.write('\nCreated Camera')
     start_time = time.time()
     elapsed_time = 0
     start_time2 = time.time()
@@ -54,11 +56,14 @@ try:
         avg_counts.update({label: 0})
 
     count = 0
+    file.write('\nLoading poi')
     objectrec.load_poi('/home/pi/dev/AIScouts/IPCameraVersion/points')
+    file.write('\nLoaded poi')
 except Exception as e:
     r = requests.post('http://192.168.51.140:8080/api/v1/' + curr_token + '/attributes',
                       data=json.dumps({'error': traceback.print_exc()}))
 
+file.close()
 try:
     server_launched = False
     while not server_launched:
