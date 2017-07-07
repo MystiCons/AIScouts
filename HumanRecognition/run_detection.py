@@ -23,7 +23,7 @@ while True:
     buffer = BytesIO()
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     pil_img = Image.fromarray(img)
-    img.save(buffer, format='JPEG')
+    pil_img.save(buffer, format='JPEG')
     img_str = base64.b64encode(buffer.getvalue())
     r = requests.post('http://192.168.51.140:8080/api/v1/gAr2fUXsBYuPUMyCUF7F/attributes',
                   data=json.dumps({'image': str(img_str)}))
