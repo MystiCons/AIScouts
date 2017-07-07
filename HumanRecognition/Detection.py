@@ -19,7 +19,7 @@ class MotionDetection:
         gray = cv2.GaussianBlur(gray, (21, 21), 0)
         if self.last_frame is None:
             self.last_frame = gray
-            return
+            return new_frame, []
         self.curr_frame = gray
         frame_delta = cv2.absdiff(self.last_frame, self.curr_frame)
         thresh = cv2.threshold(frame_delta, 25, 255, cv2.THRESH_BINARY)[1]
