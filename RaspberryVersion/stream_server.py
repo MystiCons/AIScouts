@@ -98,7 +98,6 @@ class StreamServer:
     def get_poi(self):
         self.poi_lock.acquire()
         saved_poi = self.poi.copy()
-        self.poi = []
         self.received_data = False
         self.poi_lock.release()
         return saved_poi
@@ -110,7 +109,7 @@ class StreamServer:
                 chunks = []
                 chunk = 0
                 try:
-                    chunk = conn.recv(2048)
+                    chunk = conn.recv(4096)
                 except socket.error:
                     pass
                 finally:
@@ -121,7 +120,7 @@ class StreamServer:
                         while True:
                             try:
                                 conn.settimeout(0.5)
-                                chunk = conn.recv(2048)
+                                chunk = conn.recv(4096)
                                 if not chunk:
                                     break
                                 chunks.append(chunk)
@@ -129,6 +128,7 @@ class StreamServer:
                                 break
                         data = b''.join(chunks)
                         self.poi_lock.acquire()
+                        self.poi.clear()
                         self.poi = pickle.loads(data)
                         self.poi_lock.release()
                         self.received_data = True

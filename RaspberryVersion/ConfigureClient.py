@@ -90,7 +90,7 @@ class TCPClient:
         try:
             while True:
                 chunks = []
-                chunk = self.sock.recv(2048)
+                chunk = self.sock.recv(4096)
                 if self.close:
                     break
                 self.socket_lock.acquire()
@@ -99,7 +99,7 @@ class TCPClient:
                     while True:
                         try:
                             self.sock.settimeout(0.5)
-                            chunk = self.sock.recv(2048)
+                            chunk = self.sock.recv(4096)
                             if not chunk:
                                 break
                             chunks.append(chunk)
