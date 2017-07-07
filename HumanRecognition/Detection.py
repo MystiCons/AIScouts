@@ -27,9 +27,10 @@ class MotionDetection:
         (contours, _) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
                                      cv2.CHAIN_APPROX_SIMPLE)
         ret = []
-        for con in contours:
-            (x, y, w, h) = cv2.boundingRect(con)
-            cv2.rectangle(new_frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            ret.append([x, y, w, h])
+        if contours:
+            for con in contours:
+                (x, y, w, h) = cv2.boundingRect(con)
+                cv2.rectangle(new_frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                ret.append([x, y, w, h])
         return new_frame, ret
 
