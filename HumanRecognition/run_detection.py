@@ -9,6 +9,8 @@ import requests
 from io import BytesIO
 import base64
 import json
+import cv2
+from PIL import Image
 
 camera = Camera()
 detector = MotionDetection(256)
@@ -17,9 +19,11 @@ detector = MotionDetection(256)
 
 while True:
     frame = camera.get_frame()
-    image, positions = detector.get_motion_position(frame)
+    img, positions = detector.get_motion_position(frame)
     buffer = BytesIO()
-    frame.save(buffer, format='JPEG')
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    pil_img = Image.fromarray(img)
+    img.save(buffer, format='JPEG')
     img_str = base64.b64encode(buffer.getvalue())
     r = requests.post('http://192.168.51.140:8080/api/v1/gAr2fUXsBYuPUMyCUF7F/attributes',
                   data=json.dumps({'image': str(img_str)}))
