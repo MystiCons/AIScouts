@@ -24,7 +24,7 @@ token3 = 'gAr2fUXsBYuPUMyCUF7F'
 curr_token = token3
 
 ip = subprocess.getoutput("/sbin/ifconfig wlan0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'")
-if '192' or '172' not in ip:
+if '192' not in ip and '172' not in ip:
     ip = subprocess.getoutput("/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'")
 ip2 = subprocess.getoutput("/sbin/ifconfig ppp0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'")
 
