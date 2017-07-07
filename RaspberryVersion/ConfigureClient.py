@@ -199,7 +199,7 @@ class Client:
         self.panel.bind("<Button 3>", self.mouse2_down)
         self.panel.bind('<B1-Motion>', self.mouse_drag)
         self.panel.bind('<ButtonRelease-1>', self.mouse_up)
-        self.root.after(100, self.show_new_image)
+        self.root.after(100, self.update)
         self.root.after(self.collect_every_ms, self.collect_data)
 
     def build_ui(self):
@@ -279,6 +279,7 @@ class Client:
     def cancel_redraw(self):
         self.redraw_button.configure(text="Draw new parks")
         self.reconfigure_mode = False
+        self.points_of_interest_temp.clear()
         self.cancel_button.destroy()
 
     def collect_toggle(self):
@@ -293,6 +294,7 @@ class Client:
         if not self.reconfigure_mode:
             if not self.image_orig:
                 return
+            # Start drawing mode
             self.image_draw_mode = self.image_orig.copy()
             self.image_edited = self.image_orig.copy()
             self.reconfigure_mode = True
@@ -303,6 +305,7 @@ class Client:
             self.cancel_button = tkinter.Button(self.root, text="Cancel drawing", width=10, command=self.cancel_redraw)
             self.cancel_button.grid(column=5, row=2)
         else:
+            # Send data
             self.cancel_redraw()
             self.poi_lock.acquire()
             self.points_of_interest.clear()
@@ -371,10 +374,10 @@ class Client:
         self.connected = False
         self.tcp_client.disconnect()
 
-    def show_new_image(self):
+    def update(self):
         if self.reconfigure_mode:
             if not self.image_edited:
-                self.root.after(50, self.show_new_image)
+                self.root.after(50, self.update)
                 return
             self.image_edited = self.image_draw_mode.copy()
             img2 = ImageDraw.Draw(self.image_edited)
@@ -397,7 +400,7 @@ class Client:
             self.photo_image = ImageTk.PhotoImage(self.image_raw)
             self.panel.configure(image=self.photo_image)
             self.panel.size()
-        self.root.after(50, self.show_new_image)
+        self.root.after(50, self.update)
 
 
 def main():
