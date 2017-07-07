@@ -3,7 +3,8 @@ case "$1" in
   start)
 sleep 10
 pon labranet
-    python3 /home/pi/dev/AIScouts/Raspberry/rasp_run_detection.py
+    sleep 10
+    python3 /home/pi/dev/AIScouts/RaspberryVersion/rasp_run_detection.py
     echo "PPTP Started"
     ;;
   stop)

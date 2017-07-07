@@ -5,5 +5,5 @@ if [[ $result != *'192'* ]]; then
 echo shit
 pon labranet
 sleep 10
-python3 /home/pi/dev/AIScouts/Raspberry/send_ppp_address.py
+python3 /home/pi/dev/AIScouts/RaspberryVersion/send_ppp_address.py
 fi

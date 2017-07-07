@@ -130,7 +130,7 @@ try:
                 for key in summed_counts:
                     summed_counts[key].clear()
         #print("Looped in: " + str(round(t - time.time(), 4)) + " seconds")
-        time.sleep(1)
+        time.sleep(0.3)
         count += 1
 except (KeyboardInterrupt, SystemExit):
     sys.exit()
