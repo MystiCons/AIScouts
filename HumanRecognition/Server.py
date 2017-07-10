@@ -16,23 +16,21 @@ class StreamServer:
     connections = {}
     closed = False
     connections_lock = None
-    received_data = False
-    poi = []
-    poi_lock = threading.Lock()
+    received = False
+    received_data = None
+    model_lock = threading.Lock()
 
-    def __init__(self, poi):
+    def __init__(self):
         self.sock = socket.socket()
-        self.poi = poi
         self.sock.bind((self.host, self.port))
         # Set accept timeout to 60 sec
         socket.setdefaulttimeout(30)
         self.connections_lock = threading.Lock()
         self.sock.listen(10)
 
-    def __enter__(self, poi):
+    def __enter__(self):
         self.sock = socket.socket()
         self.sock.bind((self.host, self.port))
-        self.poi = poi
         # Set accept timeout to 60 sec
         socket.setdefaulttimeout(30)
         self.connections_lock = threading.Lock()
@@ -49,7 +47,7 @@ class StreamServer:
                     self.connections_lock.acquire()
                     self.connections.update({addr[0]: conn})
                     self.connections_lock.release()
-                    client_thread = threading.Thread(target=self.receive_poi, args=(conn, addr))
+                    client_thread = threading.Thread(target=self.receive_data, args=(conn, addr))
                     client_thread.daemon = True
                     client_thread.start()
                     print(str(addr) + ' Connected! ' + str(datetime.datetime.now()))
@@ -71,7 +69,7 @@ class StreamServer:
         except socket.error as e:
             print(e.strerror)
 
-    def send_data_to_all(self, data, data2):
+    def send_images_to_all(self, data, data2):
         if len(self.connections) > 0:
             buffer = BytesIO()
             buffer2 = BytesIO()
@@ -96,15 +94,14 @@ class StreamServer:
                     del self.connections[addr]
             self.connections_lock.release()
 
-    def get_poi(self):
-        self.poi_lock.acquire()
-        saved_poi = self.poi.copy()
-        self.received_data = False
-        self.poi_lock.release()
-        return saved_poi
+    def get_received_data(self):
+        self.model_lock.acquire()
+        data = self.received_data
+        self.received = False
+        self.model_lock.release()
+        return data
 
-    def receive_poi(self, conn, addr):
-        self.send_data(self.poi, conn)
+    def receive_data(self, conn, addr):
         try:
             while True:
                 chunks = []
@@ -128,11 +125,11 @@ class StreamServer:
                             except socket.error:
                                 break
                         data = b''.join(chunks)
-                        self.poi_lock.acquire()
-                        self.poi.clear()
-                        self.poi = pickle.loads(data)
-                        self.poi_lock.release()
-                        self.received_data = True
+                        self.model_lock.acquire()
+                        self.received_data = None
+                        self.received_data = pickle.loads(data)
+                        self.model_lock.release()
+                        self.received = True
                         conn.settimeout(10)
                         print('Received new points of interest!')
                     if self.closed:
