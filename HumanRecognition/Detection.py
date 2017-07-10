@@ -7,13 +7,13 @@ class MotionDetection:
     last_frame = None
     curr_frame = None
     image_size = 256
-    min_area = 256
+    min_area = 500
 
     def __init__(self, frame_size):
         self.image_size = frame_size
         pass
 
-    def get_motion_position(self, new_frame, ):
+    def get_motion_position(self, new_frame):
         new_frame = cv2.cvtColor(np.array(new_frame), cv2.COLOR_RGB2BGR)
         #frame = cv2.resize(new_frame, (self.image_size, self.image_size))
         gray = cv2.cvtColor(new_frame, cv2.COLOR_BGR2GRAY)
@@ -25,15 +25,18 @@ class MotionDetection:
         frame_delta = cv2.absdiff(self.last_frame, self.curr_frame)
         thresh = cv2.threshold(frame_delta, 25, 255, cv2.THRESH_BINARY)[1]
         thresh = cv2.dilate(thresh, None, iterations=2)
+
         (_, contours, _) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
                                      cv2.CHAIN_APPROX_SIMPLE)
         ret = []
         if contours:
             for con in contours:
                 if cv2.contourArea(con) < self.min_area:
+                    print('small area: ' + str(cv2.contourArea(con)))
                     continue
                 (x, y, w, h) = cv2.boundingRect(con)
                 cv2.rectangle(new_frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
                 ret.append([x, y, w, h])
-        return new_frame, ret
+        self.last_frame = gray
+        return thresh, ret
 

@@ -21,7 +21,7 @@ while True:
     frame = camera.get_frame()
     img, positions = detector.get_motion_position(frame)
     buffer = BytesIO()
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    #img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     pil_img = Image.fromarray(img)
     pil_img.save(buffer, format='JPEG')
     img_str = base64.b64encode(buffer.getvalue())
