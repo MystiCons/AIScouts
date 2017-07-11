@@ -20,7 +20,15 @@ mod = Model(image_folders, learning_rate=0.001, layers=4, epochs=10,
            data_folder=data_folder, model_name='park_model')
 
 # train_model() will load the images, train it and save the model to data_folder/models/model_name 
+# Also the training data will be saved as .npy binary file partitions, every 40000 images a new partition will be created
+# This will make the data loading much faster
 mod.train_model()
+# If you wish to use old data set you can use
+mod.train_model(saved_train_data_path='/some/path/')
+# Also if you have seperate validation data, you can create a folder for them required name is image_folder + _validation
+# For example Car_validation and Park_validation, these folders should be in the same folder as the training data folders are
+# Usage
+mod.train_model(saved_train_data_path='/some/path/', separate_validation_data=True)
 
 ```
 
