@@ -11,16 +11,11 @@ class DataManipulation:
         self.data_folder = data_folder
 
     def try_cluster_training_data(self, path, clusters, img_size=128):
-        dir = os.listdir(path)
         data = []
-        for i in tqdm(range(len(dir))):
-            try:
-                img_orig = cv2.imread(path + str(i) + '.bmp', cv2.IMREAD_COLOR)
-                img = cv2.resize(img_orig, (img_size, img_size))
-                img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                data.append(np.array(img, dtype=np.float32))
-            except Exception:
-                pass
+        for img in tqdm(os.listdir(path)):
+            img_orig = cv2.imread(path + img, cv2.IMREAD_GRAYSCALE)
+            img_orig = cv2.resize(img_orig, (img_size, img_size))
+            data.append(np.array(img_orig, dtype=np.float32))
 
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 1.0)
         flags = cv2.KMEANS_RANDOM_CENTERS
@@ -95,8 +90,8 @@ if __name__ == '__main__':
 
     #mod.try_cluster_training_data("/media/cf2017/levy/tensorflow/images/new_training_data/", 2)
     #mod.color_quantization(mod.data_folder + 'clustered_images/A/', mod.data_folder + 'clustered_images/A/')
-    manipulator = DataManipulation("/media/cf2017/levy/tensorflow/parking_place/")
-    #manipulator.try_cluster_training_data("/media/cf2017/levy/tensorflow/parking_place/new_training_data/Park/", 3)
+    manipulator = DataManipulation("/media/cf2017/levy/tensorflow/parking_place2/")
+    manipulator.try_cluster_training_data("/media/cf2017/levy/tensorflow/parking_place2/asd/Park/", 5)
     #manipulator.color_quantization(inp + "Park/", 24, 128, save_images_path=inp + "augmented_parks/")
     #manipulator.color_quantization(inp + "Park/", 16, 128, save_images_path=inp + "augmented_parks/")
     #manipulator.color_quantization(inp + "Car/", 32, 128, save_images_path=inp + "augmented_cars/")
@@ -106,6 +101,6 @@ if __name__ == '__main__':
 
 
     #manipulator.flip_images(inp + "augmented_parks/", inp + "flipped_parks/", 128)
-    manipulator.flip_images(inp + "Car/", inp + "flipped_cars/", 128)
+    #manipulator.flip_images(inp + "Car/", inp + "flipped_cars/", 128)
 
 

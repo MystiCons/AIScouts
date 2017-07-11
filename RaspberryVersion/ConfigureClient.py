@@ -14,7 +14,7 @@ import tkinter
 import pickle
 
 import numpy as np
-from DeepLearning.rasp_model import Model
+#from DeepLearning.rasp_model import Model
 
 
 try:
@@ -39,6 +39,7 @@ class TCPClient:
         self.images_lock = threading.Lock()
         self.socket_lock = threading.Lock()
         self.poi_lock = threading.Lock()
+
     def init_socket(self):
         self.sock = socket.socket()
         socket.setdefaulttimeout(30)
@@ -130,6 +131,7 @@ class TCPClient:
 
     def send_data(self, data):
         try:
+            print(data)
             data_string = pickle.dumps(data)
             self.sock.sendall(data_string)
         except socket.error as e:
@@ -175,6 +177,7 @@ class Client:
     disconnect_button = None
     redraw_button = None
     data_collect_button = None
+    full_image_collect_button = None
     cancel_button = None
     connected = False
 
@@ -186,9 +189,11 @@ class Client:
 
     reconfigure_mode = False
     data_collection_mode = False
+    full_image_collection_mode = False
     points_of_interest = []
     points_of_interest_temp = []
-    collect_every_ms = 1000
+    collect_every_ms = 60000
+    collect_full_images_every_ms = 1000
     model = None
 
     def __init__(self, model=None):
@@ -201,6 +206,7 @@ class Client:
         self.panel.bind('<ButtonRelease-1>', self.mouse_up)
         self.root.after(100, self.update)
         self.root.after(self.collect_every_ms, self.collect_data)
+        self.root.after(self.collect_full_images_every_ms, self.collect_full_images)
 
     def build_ui(self):
         self.root = tkinter.Tk()
@@ -234,17 +240,49 @@ class Client:
         self.data_collect_button = tkinter.Button(self.root, text="Start collecting data", width=20, command=self.collect_toggle)
         self.data_collect_button.grid(row=1, column=6)
 
+        self.full_image_collect_button = tkinter.Button(self.root, text="Start collecting full images", width=20,
+                                                  command=self.collect_full_images_toggle)
+        self.full_image_collect_button.grid(row=1, column=7)
+
     def collect_data(self):
         if self.data_collection_mode and not self.connected:
             self.collect_toggle()
         if not self.image_draw_mode:
             self.image_orig_lock.acquire()
             if self.image_orig and self.data_collection_mode:
-                self.save_images_from_poi(self.tcp_client.get_next_image_orig(), '/media/cf2017/levy/tensorflow/parking_place/new_training_data/')
+                self.save_images_from_poi(self.tcp_client.get_next_image_orig(), '/media/cf2017/levy/tensorflow/parking_place2/new_validation_data/')
                 print('Collected data')
             self.image_orig_lock.release()
         self.root.after(self.collect_every_ms, self.collect_data)
-        pass
+
+    def collect_full_images(self):
+        try:
+            if self.full_image_collection_mode and not self.connected:
+                self.collect_full_images_toggle()
+            if not self.image_draw_mode:
+                path = '/media/cf2017/levy/tensorflow/parking_place2/time_lapse/'
+                self.image_orig_lock.acquire()
+                if self.image_orig and self.full_image_collection_mode:
+                    if not os.path.isdir(path):
+                        os.mkdir(path)
+                    dirlen = len(os.listdir(path))
+                    img = self.tcp_client.get_next_image()
+                    if img:
+                        img2 = img.crop((0,0, 1024, 640))
+                        img2.save(path + str(dirlen + 1) + '.jpg')
+                self.image_orig_lock.release()
+        except:
+            pass
+        finally:
+            self.root.after(self.collect_full_images_every_ms, self.collect_full_images)
+
+    def collect_full_images_toggle(self):
+        if not self.full_image_collection_mode and self.connected:
+            self.full_image_collect_button.configure(text="Stop collecting full images")
+            self.full_image_collection_mode = True
+        else:
+            self.full_image_collect_button.configure(text="Start collecting full images")
+            self.full_image_collection_mode = False
 
     def save_images_from_poi(self, image, path):
         if not os.path.isdir(path):
@@ -306,12 +344,11 @@ class Client:
             self.cancel_button.grid(column=5, row=2)
         else:
             # Send data
-            self.cancel_redraw()
             self.poi_lock.acquire()
             self.points_of_interest.clear()
             self.points_of_interest = self.points_of_interest_temp.copy()
-            self.tcp_client.send_data(self.points_of_interest)
-            self.points_of_interest_temp.clear()
+            self.tcp_client.send_data(self.points_of_interest.copy())
+            self.cancel_redraw()
             self.poi_lock.release()
 
     def mouse2_down(self, event):
@@ -361,14 +398,11 @@ class Client:
             ip = self.ip_box.get()
             port = int(self.port_box.get())
             self.points_of_interest = self.tcp_client.connect(ip, port)
-            if self.points_of_interest:
-                print('Connected!')
-                thread = threading.Thread(target=self.tcp_client.receive)
-                thread.daemon = True
-                thread.start()
-                self.connected = True
-            else:
-                print('Could not receive points of interest!')
+            print('Connected!')
+            thread = threading.Thread(target=self.tcp_client.receive)
+            thread.daemon = True
+            thread.start()
+            self.connected = True
 
     def disconnect(self):
         self.connected = False
@@ -404,8 +438,8 @@ class Client:
 
 
 def main():
-    mod = Model.load_model("/home/cf2017/PycharmProjects/AIScouts/AIScouts/DeepLearning/models/park_model22")
-    client = Client(mod)
+    #mod = Model.load_model("/home/cf2017/PycharmProjects/AIScouts/AIScouts/DeepLearning/models/park_model22")
+    client = Client()
     client.run_tk()
 
 if __name__ == '__main__':

@@ -29,6 +29,7 @@ class Model:
     label_folders = {}
     labels = {}
     shuffle = False
+    separate_validation_data = False
 
 
     def __init__(self, label_folders, data_folder='./',
@@ -65,7 +66,7 @@ class Model:
             convnet = max_pool_2d(convnet, 2)
 
         convnet = fully_connected(convnet, 1024, activation='relu')
-        convnet = dropout(convnet, 0.8)
+        convnet = dropout(convnet, 0.5)
 
         convnet = fully_connected(convnet, len(self.label_folders), activation='softmax')
         convnet = regression(convnet, optimizer='Adam', shuffle_batches=False, learning_rate=self.learning_rate,
@@ -162,43 +163,116 @@ class Model:
                     iteration = 0
             count += 1
         # Save excess data
-        if not iteration == 0:
-            if len(training_data) == 0:
-                training_data = data
-            else:
-                training_data = np.concatenate((training_data, data))
-            self.save_data_set_partition(data, save_path)
-            data.clear()
+        if len(training_data) == 0:
+            training_data = data
+        else:
+            training_data = np.concatenate((training_data, data))
+        self.save_data_set_partition(data, save_path)
+        data.clear()
         np.random.shuffle(training_data)
         return training_data
+
+    def load_validation_data(self, save_folder=None):
+        validation_data = np.array([])
+        data = []
+        count = 0
+        iteration = 0
+
+        if not os.path.isdir(self.data_folder + self.model_name):
+            os.mkdir(self.data_folder + self.model_name)
+        if not save_folder:
+            save_path = self.data_folder + self.model_name + '/'
+        else:
+            save_path = save_folder
+
+        for i in range(len(self.label_folders)):
+            path = self.data_folder + self.label_folders[i].split('/')[1] + '_validation'
+            label = np.zeros(len(self.label_folders), np.int32)
+            label[i] = 1
+            tmp_dict = {count: self.label_folders[i].split('/')[-2]}
+            self.labels.update(tmp_dict)
+            for img in tqdm(os.listdir(path)):
+                path2 = os.path.join(path, img)
+                try:
+                    img = cv2.resize(cv2.imread(path2, cv2.IMREAD_GRAYSCALE),
+                                     (self.img_size, self.img_size))
+                    data.append([np.array(img), np.array(label)])
+                except Exception:
+                    print('failed to load image: ' + path2)
+                iteration += 1
+                if iteration > 40000:
+                    if len(validation_data) == 0:
+                        validation_data = data.copy()
+                    else:
+                        validation_data = np.concatenate((validation_data, data.copy()))
+                    self.save_validation_set_partition(data, save_path)
+                    data.clear()
+                    iteration = 0
+            count += 1
+        # Save excess data
+        if len(validation_data) == 0:
+            validation_data = data.copy()
+        else:
+            validation_data = np.concatenate((validation_data, data.copy()))
+        self.save_validation_set_partition(data, save_path)
+        data.clear()
+        if len(validation_data) == 0:
+            self.separate_validation_data = False
+        else:
+            np.random.shuffle(validation_data)
+            self.separate_validation_data = True
+        return validation_data
 
     def save_data_set_partition(self, data, save_path):
         np.save(save_path + self.model_name + '_train_data' + str(len(os.listdir(save_path))) + '.npy', data)
 
+    def save_validation_set_partition(self, data, save_path):
+        np.save(save_path + self.model_name + '_validation_data' + str(len(os.listdir(save_path))) + '.npy', data)
+
     def load_saved_data_set(self, path):
         data = np.array([])
+        validation_data = np.array([])
         for file in os.listdir(path):
-            load = np.load(path + file)
-            if data.size == 0:
-                data = load
-            else:
-                data = np.concatenate((data, load))
+            if '_train_data' in file:
+                load = np.load(path + file)
+                if data.size == 0:
+                    data = load
+                else:
+                    data = np.concatenate((data, load))
+            elif '_validation_data' in file and self.separate_validation_data:
+                load = np.load(path + file)
+                if validation_data.size == 0:
+                    validation_data = load
+                else:
+                    validation_data = np.concatenate((validation_data, load))
+
         if data.size == 0:
             print('Data set loading failed.')
             exit(2)
+        if validation_data.size == 0:
+            self.separate_validation_data = False
         np.random.shuffle(data)
+        if self.separate_validation_data:
+            np.random.shuffle(validation_data)
 
-        return data
+        return data, validation_data
 
-
-
-    def train_model(self, saved_train_data_path=None):
+    def train_model(self, saved_train_data_path=None, separate_validation_data=False):
+        # If there is no separate validation data just load training data and use 20% of it as validation
+        if separate_validation_data is False:
+            self.separate_validation_data = False
+        elif saved_train_data_path is None:
+            validation_data = self.load_validation_data()
 
         if saved_train_data_path is None:
             train_data = self.load_training_data()
         else:
             if os.path.isdir(saved_train_data_path):
-                train_data = self.load_saved_data_set(saved_train_data_path)
+                train_data, validation_data = self.load_saved_data_set(saved_train_data_path)
+                # If we have saved train_data, but validation_data wasn't found and separate_validation_data is true,
+                # load validation data
+                if not self.separate_validation_data and separate_validation_data:
+                    validation_data = self.load_validation_data(save_folder=saved_train_data_path)
                 self.relable()
             else:
                 print('Given data file not found, loading data.')
@@ -211,11 +285,18 @@ class Model:
             if not i.lower() == 'continue' or 'c':
                 self.model = Model.load_model(self.data_folder + 'models/' + self.model_name)
                 return
-        #Use 80% of the data for training and 20% for validation
-        train_ratio = int(0.8 * len(train_data))
-        test_ratio = int(0.2 * len(train_data))
-        train = train_data[:train_ratio]
-        test = train_data[-test_ratio:]
+
+        if separate_validation_data and not self.separate_validation_data:
+            print('Seperate validation data not found! Using 20% of the training data')
+        if self.separate_validation_data:
+            test = validation_data
+            train = train_data
+        else:
+            #Use 80% of the data for training and 20% for validation
+            train_ratio = int(0.8 * len(train_data))
+            test_ratio = int(0.2 * len(train_data))
+            train = train_data[:train_ratio]
+            test = train_data[-test_ratio:]
 
         X = np.array([i[0] for i in train]).reshape(-1, self.img_size, self.img_size, 1)
         Y = [i[1] for i in train]
