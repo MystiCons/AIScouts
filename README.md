@@ -57,7 +57,8 @@ sudo pip3 uninstall mock
 sudo pip3 install mock
 
 # Install Pillow and tflearn
-sudo pip3 install Pillow tflearn
+sudo pip3 install Pillow
+sudo pip3 install git+https://github.com/tflearn/tflearn.git
 
 # Clone this repository
 git clone https://github.com/MystiCons/AIScouts
@@ -92,5 +93,7 @@ sudo pip3 uninstall mock
 sudo pip3 install mock
 
 # Install Pillow and tflearn
-sudo pip3 install Pillow tflearn
+sudo pip3 install Pillow 
+sudo pip3 install git+https://github.com/tflearn/tflearn.git
+
 ```
