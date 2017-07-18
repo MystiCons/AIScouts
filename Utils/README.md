@@ -1,13 +1,13 @@
 # Utilities
 
-## data_manipulation.py
+## data_manipulation.py     
+
+data_manipulation.py was used in the project to create artificial data and seperate images automatically from each other to create labeled data.    
 Dependancies:    
 
  * OpenCV ([Installation script](https://github.com/MystiCons/AIScouts/blob/master/InstallScripts/OpenCV_install_script.sh))    
  * numpy    
  * tqdm    
-
-data_manipulation.py was used in the project to create artificial data and seperate images automatically from each other to create labeled data.    
 
 The methods will output only grayscale images. 
 

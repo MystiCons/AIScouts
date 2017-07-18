@@ -4,13 +4,19 @@ import os
 import cv2
 import pickle
 import matplotlib.pyplot as plt
+from scipy.misc import imresize
 
 from tqdm import tqdm
 from random import shuffle
-from tflearn.layers.conv import conv_2d, max_pool_2d
+from tflearn.layers.conv import conv_2d, max_pool_2d, upsample_2d
 from tflearn.layers.core import input_data,  dropout,  fully_connected
 from tflearn.layers.estimator import regression
+from tflearn.datasets import mnist
+import tflearn
 from tflearn.optimizers import Adam
+import tensorflow as tf
+import math
+from PIL import Image
 
 
 # Represents a convolutional neural network
@@ -31,10 +37,16 @@ class Model:
     shuffle = False
     separate_validation_data = False
 
+    # DCGAN
+    z_dim = 1000
+    gen_net = None
+    is_dcgan = False
+    gen_model = None
+
 
     def __init__(self, label_folders, data_folder='./',
                    learning_rate=1e-3, img_size=128, layers=4,
-                   epochs=10, image_channels=1, model_name=''):
+                   epochs=10, image_channels=1, model_name='', DCGAN=False):
         if model_name == '':
             model_name = 'L' + str(layers) + 'R' + str(learning_rate) + 'E' + str(epochs)
         self.label_folders = label_folders
@@ -46,6 +58,7 @@ class Model:
         self.model_name = model_name
         self.data_folder = data_folder
         self.image_channels = image_channels
+        self.is_dcgan = DCGAN
 
         if not self.data_folder[-1] == '/':
             self.data_folder += '/'
@@ -53,7 +66,10 @@ class Model:
         for i in range(len(self.label_folders)):
             if not self.label_folders[i][-1] == '/':
                 self.label_folders[i] += '/'
-        self.conv_nn()
+        if DCGAN:
+            self.build_DCGAN()
+        else:
+            self.conv_nn()
 
     def conv_nn(self):
         convnet = input_data(shape=[None, self.img_size, self.img_size, self.image_channels], name='input')
@@ -78,6 +94,7 @@ class Model:
         self.model = tflearn.DNN(convnet, tensorboard_dir='log',
                             checkpoint_path=self.data_folder + 'checkpoints/' + self.model_name + '/')
 
+
     # Loads a saved instance of class Model
     @classmethod
     def load_model(cls, path):
@@ -89,15 +106,17 @@ class Model:
         mod = cls(dict['label_folders'], data_folder=dict['data_folder'],
                    learning_rate=dict['learning_rate'],
                    img_size=dict['img_size'],layers=dict['layers'],
-                    epochs=dict['epochs'], model_name=dict['model_name'])
+                    epochs=dict['epochs'], model_name=dict['model_name'], DCGAN=dict['is_dcgan'])
         if os.path.exists(path + '.meta'):
             mod.model.load(path)
             print('model loaded!')
         else:
-            print('Configuration loaded, but no trained model found, call train_model method after this.')
+            print('Configuration loaded, but no trained model found, call train_model or DCGAN method after this.')
         f.close()
         # Relable the model
         mod.relable()
+        if mod.is_dcgan:
+            mod.gen_model = tflearn.DNN(mod.gen_net, session=mod.model.session)
         return mod
 
     def save_settings(self):
@@ -108,7 +127,8 @@ class Model:
         f.close()
 
     def save_model(self):
-        dict = {key: value for key, value in self.__dict__.items() if not key.startswith('__') and not callable(value) and not key == 'model'}
+        dict = {key: value for key, value in self.__dict__.items() if not key.startswith('__') and not callable(value)
+                and not key == 'model' and not key == 'gen_net' and not key == 'gen_model'}
         self.model.save(self.data_folder + 'models/' + self.model_name)
         f = open(self.data_folder + 'models/' + self.model_name + '.settings', 'wb')
         pickle.dump(dict, f, 2)
@@ -164,7 +184,7 @@ class Model:
             count += 1
         # Save excess data
         if len(training_data) == 0:
-            training_data = data
+            training_data = data.copy()
         else:
             training_data = np.concatenate((training_data, data))
         self.save_data_set_partition(data, save_path)
@@ -316,7 +336,7 @@ class Model:
             tmp_dict.update({i: self.label_folders[i].split('/')[-2]})
         self.labels = tmp_dict
 
-    def predict_with_path(self, path, predictions=1):
+    def predict_with_path(self, path):
         try:
             img = cv2.resize(cv2.imread(path, cv2.IMREAD_GRAYSCALE),
                              (self.img_size, self.img_size))
@@ -329,12 +349,16 @@ class Model:
         return self.labels[index], round(out[index], 3)
 
 
-    def predict(self, img, predictions=1):
+    def predict(self, img):
         img = cv2.resize(img, (self.img_size, self.img_size))
         data = img.reshape(self.img_size, self.img_size, 1)
         out = self.model.predict([data])[0]
         index = np.argmax(out)
         return self.labels[index], round(out[index], 3)
+
+    def predict_DCGAN(self, noise):
+        out = np.array(self.gen_model.predict({'input_gen_noise': noise}))
+        return out
 
     def test_model(self, path='test_data/'):
         if os.path.isfile(self.data_folder + self.model_name + '_test_data' + '.npy'):
@@ -345,7 +369,6 @@ class Model:
         fig = plt.figure()
 
         for label, data in enumerate(test_data[:12]):
-
             img_label = data[1]
             img_data = data[0]
             y = fig.add_subplot(3, 4, label + 1)
@@ -359,6 +382,174 @@ class Model:
             y.axes.get_yaxis().set_visible(False)
         plt.show()
 
+    def DCGAN(self, mnist_data=False):
+        # Preprocess
+        if not mnist_data:
+            train = self.load_training_data()
+            # i[0] is the image, i[1] the label
+            X = np.array([i[0] for i in train]).reshape(-1, self.img_size, self.img_size, 1)
+        else:
+            X, Y, test_X, test_Y = mnist.load_data()
+            X = X.reshape(-1, 28, 28, 1)
+        preprocessed = []
+        for image in tqdm(X):
+            dim = (self.img_size, self.img_size)
+            img = cv2.resize(image, dim)
+            cv2.normalize(img, img, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+            preprocessed.append(img)
+        X = np.array(preprocessed.copy())
+        X = X.reshape(-1, self.img_size, self.img_size, 1)
+        np.random.shuffle(X)
+
+        total_samples = len(X)
+
+        disc_noise = np.random.uniform(0., 1., size=[total_samples, self.z_dim])
+        # Prepare target data to feed to the discriminator (0: fake image, 1: real image)
+        y_disc_fake = np.zeros(shape=[total_samples])
+        y_disc_real = np.ones(shape=[total_samples])
+        # Convert class vector (integers from 0 to nb_classes) to binary class matrix, for use with categorical_crossentropy.
+        y_disc_fake = tflearn.data_utils.to_categorical(y_disc_fake, 2)
+        y_disc_real = tflearn.data_utils.to_categorical(y_disc_real, 2)
+
+        # Prepare input data to feed to the stacked generator/discriminator
+        gen_noise = np.random.uniform(0., 1., size=[total_samples, self.z_dim])
+        # Prepare target data to feed to the discriminator
+        # Generator tries to fool the discriminator, thus target is 1 (e.g. real images)
+        y_gen = np.ones(shape=[total_samples])
+        y_gen = tflearn.data_utils.to_categorical(y_gen, 2)
+
+        visual_callback = Visual_CallBack(self.gen_net)
+
+        #logger_callback = tflearn.callbacks.TermLogger()
+
+        # Start training, feed both noise and real images.
+        self.model.fit(X_inputs={'input_gen_noise': gen_noise,
+                          'input_disc_noise': disc_noise,
+                          'input_disc_real': X},
+                            Y_targets={'target_gen': y_gen,
+                           'target_disc_fake': y_disc_fake,
+                           'target_disc_real': y_disc_real},
+                            n_epoch=self.epochs, show_metric=True,
+                            shuffle=False, snapshot_epoch=True, run_id=self.model_name,
+                            callbacks=visual_callback) #logger_callback])
+
+        self.save_model()
+        self.gen_model = tflearn.DNN(self.gen_net, session=self.model.session)
+        # Create another model from the generator graph to generate some samples
+        # for testing (re-using same session to re-use the weights learnt).
 
 
+    def build_DCGAN(self):
+        gen_input = input_data(shape=[None, self.z_dim], name='input_gen_noise')
+        input_disc_noise = input_data(shape=[None, self.z_dim], name='input_disc_noise')
+        input_disc_real = input_data(shape=[None, self.img_size, self.img_size, 1], name='input_disc_real')
+
+        disc_fake = self.discriminator(self.generator(input_disc_noise))
+        disc_real = self.discriminator(input_disc_real, reuse=True)
+        disc_net = tf.concat([disc_fake, disc_real], axis=0)
+
+        gen_net = self.generator(gen_input, reuse=True)
+        stacked_gan_net = self.discriminator(gen_net, reuse=True)
+
+        disc_vars = tflearn.get_layer_variables_by_scope('Discriminator')
+
+        disc_target = tflearn.multi_target_data(['target_disc_fake', 'target_disc_real'],
+                                                shape=[None, 2])
+
+        adam = Adam(learning_rate=self.learning_rate, beta1=0.8)
+        disc_model = regression(disc_net, optimizer=adam,
+                                placeholder=disc_target,
+                                loss='categorical_crossentropy',
+                                trainable_vars=disc_vars,
+                                name='target_disc', batch_size=self.img_size,
+                                op_name='DISC')
+
+        gen_vars = tflearn.get_layer_variables_by_scope('Generator')
+        gan_model = regression(stacked_gan_net, optimizer=adam,
+                               loss='categorical_crossentropy',
+                               trainable_vars=gen_vars,
+                               name='target_gen', batch_size=self.img_size,
+                               op_name='GEN')
+
+        self.model = tflearn.DNN(gan_model, tensorboard_dir='log',
+                          checkpoint_path=self.data_folder + 'checkpoints/' + self.model_name + '/')
+        self.gen_net = gen_net
+
+
+    # Generator
+    def generator(self, x, reuse=False):
+        s = self.img_size
+        s2 = self.divide(s, 2)
+        s4 = self.divide(s2, 2)
+        s8 = self.divide(s4, 2)
+        s16 = self.divide(s8, 2)
+
+        with tf.variable_scope('Generator', reuse=reuse):
+            x = tflearn.fully_connected(x, s8 * s8 * 512)
+            x = tflearn.batch_normalization(x)
+            x = tf.reshape(x, shape=[-1, s8, s8, 512])
+            x = tflearn.dropout(x, 0.5)
+            x = tflearn.batch_normalization(x)
+            x = tflearn.conv_2d_transpose(x, 64, 5, [s4, s4], strides=[2, 2], activation='relu')
+            x = tflearn.batch_normalization(x)
+            x = tflearn.conv_2d_transpose(x, 32, 5, [s2, s2], strides=[2, 2], activation='relu')
+            x = tflearn.batch_normalization(x)
+            x = tflearn.conv_2d_transpose(x, 1, 2, [s, s], strides=[2, 2], activation='relu')
+            return tf.nn.tanh(x)
+
+    # Discriminator
+    def discriminator(self, x, reuse=False):
+        with tf.variable_scope('Discriminator', reuse=reuse):
+            x = tflearn.conv_2d(x, 16, 2, activation='relu')
+            x = tflearn.avg_pool_2d(x, 2)
+            # x = tflearn.batch_normalization(x)
+            x = tflearn.conv_2d(x, 32, 2, activation='relu')
+            x = tflearn.avg_pool_2d(x, 2)
+            # x = tflearn.batch_normalization(x)
+            x = tflearn.conv_2d(x, 64, 2, activation='relu')
+            x = tflearn.avg_pool_2d(x, 2)
+            # x = tflearn.batch_normalization(x)
+            x = tflearn.conv_2d(x, 128, 2, activation='relu')
+            x = tflearn.avg_pool_2d(x, 2)
+            # x = tflearn.batch_normalization(x)
+            x = tflearn.fully_connected(x, 1024, activation='relu')
+            x = tflearn.dropout(x, 0.8)
+            x = tflearn.fully_connected(x, 2, activation='softmax')
+            return x
+
+    def divide(self, size, stride):
+        return math.ceil(float(size) / float(stride))
+
+
+class Visual_CallBack(tflearn.callbacks.Callback):
+    gen = None
+    gen_net = None
+    z = None
+    f = None
+    a = None
+    image_count = 0
+    images_row = 0
+    img_size = 0
+    def __init__(self, gen_net, img_count=1, img_size=64):
+        self.gen_net = gen_net
+        self.z = np.random.uniform(0., 1., size=[img_count, 1000])
+        self.image_count = img_count
+        self.images_row = int(math.floor(math.sqrt(img_count)))
+        self.img_size = img_size
+        self.gen = tflearn.DNN(self.gen_net, session=tf.get_default_session())
+
+    def on_batch_end(self, training_state, snapshot):
+        # Noise input.
+        images = np.array(self.gen.predict({'input_gen_noise': self.z}))
+        images = denormalize_image(images)
+        new_im = np.vstack(([(np.hstack(([images[i * j] for i in range(self.images_row)]))) for j in range(self.images_row)]))
+        cv2.imshow("main", new_im)
+        cv2.waitKey(1)
+        #dirlen = len(os.listdir('/media/cf2017/levy/tensorflow/DCGAN/time_lapse/'))
+        #cv2.imwrite('/media/cf2017/levy/tensorflow/DCGAN/time_lapse/' + str(dirlen) + '.bmp', new_im)
+
+
+
+def denormalize_image(images):
+    return np.array([x * 255 for x in images], dtype='uint8')
 

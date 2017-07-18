@@ -14,7 +14,7 @@ import tkinter
 import pickle
 
 import numpy as np
-#from DeepLearning.rasp_model import Model
+from DeepLearning.rasp_model import Model
 
 
 try:
@@ -195,6 +195,8 @@ class Client:
     collect_every_ms = 60000
     collect_full_images_every_ms = 1000
     model = None
+    time_lapse_path = None
+    time_lapse_count = 0
 
     def __init__(self, model=None):
         self.model = model
@@ -248,38 +250,33 @@ class Client:
         if self.data_collection_mode and not self.connected:
             self.collect_toggle()
         if not self.image_draw_mode:
-            self.image_orig_lock.acquire()
             if self.image_orig and self.data_collection_mode:
                 self.save_images_from_poi(self.tcp_client.get_next_image_orig(), '/media/cf2017/levy/tensorflow/parking_place2/new_validation_data/')
-                print('Collected data')
-            self.image_orig_lock.release()
         self.root.after(self.collect_every_ms, self.collect_data)
 
     def collect_full_images(self):
-        try:
-            if self.full_image_collection_mode and not self.connected:
-                self.collect_full_images_toggle()
-            if not self.image_draw_mode:
-                path = '/media/cf2017/levy/tensorflow/parking_place2/time_lapse/'
-                self.image_orig_lock.acquire()
-                if self.image_orig and self.full_image_collection_mode:
-                    if not os.path.isdir(path):
-                        os.mkdir(path)
-                    dirlen = len(os.listdir(path))
-                    img = self.tcp_client.get_next_image()
-                    if img:
-                        img2 = img.crop((0,0, 1024, 640))
-                        img2.save(path + str(dirlen + 1) + '.jpg')
-                self.image_orig_lock.release()
-        except:
-            pass
-        finally:
-            self.root.after(self.collect_full_images_every_ms, self.collect_full_images)
+
+        if self.full_image_collection_mode and not self.connected:
+            self.collect_full_images_toggle()
+        if not self.image_draw_mode:
+
+            if self.image_orig and self.full_image_collection_mode:
+                if not os.path.isdir(self.time_lapse_path):
+                    os.mkdir(self.time_lapse_path)
+                img = self.tcp_client.get_next_image()
+                if img:
+                    img2 = img.crop((0,0, 1024, 640))
+                    img2.save(self.time_lapse_path + str(self.time_lapse_count + 1) + '.jpg')
+                    self.time_lapse_count += 1
+
+        self.root.after(self.collect_full_images_every_ms, self.collect_full_images)
 
     def collect_full_images_toggle(self):
         if not self.full_image_collection_mode and self.connected:
             self.full_image_collect_button.configure(text="Stop collecting full images")
             self.full_image_collection_mode = True
+            self.time_lapse_path = '/media/cf2017/levy/tensorflow/parking_place2/time_lapse2/'
+            self.time_lapse_count = len(os.listdir(self.time_lapse_path))
         else:
             self.full_image_collect_button.configure(text="Start collecting full images")
             self.full_image_collection_mode = False
@@ -438,8 +435,8 @@ class Client:
 
 
 def main():
-    #mod = Model.load_model("/home/cf2017/PycharmProjects/AIScouts/AIScouts/DeepLearning/models/park_model22")
-    client = Client()
+    mod = Model.load_model("/home/cf2017/PycharmProjects/AIScouts/AIScouts/DeepLearning/models/park_model22")
+    client = Client(model=mod)
     client.run_tk()
 
 if __name__ == '__main__':
