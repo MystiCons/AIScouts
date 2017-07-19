@@ -97,3 +97,5 @@ sudo pip3 install Pillow
 sudo pip3 install git+https://github.com/tflearn/tflearn.git
 
 ```
+
+Usage guide for raspberry version [here](https://github.com/MystiCons/AIScouts/blob/master/RaspberryVersion/README.md)

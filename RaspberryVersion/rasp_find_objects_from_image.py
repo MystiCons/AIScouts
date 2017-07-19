@@ -12,7 +12,7 @@ class ObjectRecognition:
     curr_position = [0, 0]
     visualize = False
     interesting = []
-    #{Point of interest[x,y], cropsize[x,y]}
+    # fromat: {center[x,y], cropsize[x,y]}
     saved_poi = []
     auto_find = False
     show_poi = False
@@ -36,7 +36,8 @@ class ObjectRecognition:
         self.visualize = visualize
         self.auto_find = auto_find
         self.interesting = interesting_labels
-        self.font = ImageFont.truetype('/home/pi/dev/AIScouts/RaspberryVersion/DejaVuSans-Bold.ttf', 16)
+        script_dir = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__))))
+        self.font = ImageFont.truetype(script_dir + '/DejaVuSans-Bold.ttf', 16)
         for label in model.label_folders:
             self.labels_counts.update({label.split('/')[-2]: []})
 

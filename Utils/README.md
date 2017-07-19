@@ -37,9 +37,12 @@ manipulator.flip_images(path + 'output/', path + 'output/' + "flipped_images/", 
 
 ## Vpn
 
-The vpn folder has some utilities which were used to create a pptp vpn connection to labranet and keep it alive. Also startup script which will launch parking detection when the system boots.
+The vpn folder has some utilities which were used to create a pptp vpn connection to a network and keep it alive. Also startup script which will launch parking detection when the system boots.
 
-the "labranet" file requires username and password to be inputted and you should change the paths in the files.
+the "labranet" file is an example file for pptp, which needs to be changed according to your target network. 
+
+This implementation requires the user to add the script paths into the scripts!
+
 
 ## rename_files.py
 This script simply moves input folders files to output folder and renames them according to the output folders file count. 

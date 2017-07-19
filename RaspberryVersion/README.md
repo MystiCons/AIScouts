@@ -6,25 +6,38 @@ We used [picamera](https://picamera.readthedocs.io/en/release-1.13/) to take pic
 The `rasp_run_detection.py` script also sends the data to thingsboard using [requests](http://docs.python-requests.org/en/master/).   
 
 Dependancies:    
- * OpenCV 2
- * DeepLearning.Model (In this repository)
- * tqdm
- * matplotlib
- * JSON
- * Pickle
+ * Python 3+   
+ * picamera 
+ * DeepLearning.rasp_model (In this repository)   
+ * tqdm   
+ * matplotlib   
+ * JSON   
+ * Pickle   
+ * Pillow   
+ * TFlearn   
+ * Tensorflow [(for raspberry)](https://github.com/samjabrahams/tensorflow-on-raspberry-pi/releases/download/v1.1.0/tensorflow-1.1.0-cp34-cp34m-linux_armv7l.whl)   
 
-## find_objects_from_image.py
-This module contains a class called ObjectRecognition which uses DeepLearning.Model to predict crops from an image.   
+Installation guide can be found [here](https://github.com/MystiCons/AIScouts/blob/master/README.md)    
 
-When `find_objects(img)` is called, the script will allow the user to draw crops on the image which will be used as static crop positions which will be predicted on every image after the drawing. The crop positions can be saved to .poi file by calling `ObjectRecognition.save_poi('path/name')` and loaded with `ObjectRecognition.load_poi('path/name')`    
+## ConfigureClient.py
+An client (with ui) which can and should be used to configure your installed raspberry. Uses tcp to move information between your config pc and raspberry. 
+[User Guide](https://github.com/MystiCons/AIScouts/wiki/Configure-Client-User-Guide).
 
-if ObjectRecognition class is created using `auto_find=True` the script tries to find objects which are in the `interesting_labels` array.    
+## stream_server.py
+A tcp server for raspberry pi, sends images to configure client and receives points of interest.
 
-Hotkeys for the crop drawing:
- * R: Reset points of interest
- * ESC: Stop drawing
- * Mouse 2 (Right button): Undo last crop
- * Mouse 1 (Hold): Draw crop
+## rasp_find_objects_from_image.py
+This module contains a class called ObjectRecognition which uses DeepLearning.rasp_model to predict crops from an image.   
 
-## Results    
-The folder `results` has some image outputs of the auto_find feature using different models. The images are named after the models parameters. (Layers + Learning_rate + Epochs + Size)
+## points.poi 
+A pickle file containing the points of interest sent from ConfigureClient.
+
+## rasp_run_detection.py
+An example of a main loop, detecting cars with raspberry pi.
+
+## Camera.py
+Contains a class which can take pictures with picamera. get_frame() takes an picture and returns it.
+
+
+
+# 
