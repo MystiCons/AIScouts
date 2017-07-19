@@ -38,6 +38,3 @@ An example of a main loop, detecting cars with raspberry pi.
 ## Camera.py
 Contains a class which can take pictures with picamera. get_frame() takes an picture and returns it.
 
-
-
-# 

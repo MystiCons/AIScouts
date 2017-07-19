@@ -1,4 +1,6 @@
 
+# Machine learning
+This folder has all the code containing machine learning techniques used in the parking place detection system.    
 ## model.py and rasp_model.py
 These files describe a neural network and it's parameters.   
 Rasp_model is a simple version of model.py. The simple version can't train the model or test the model, it should be used only if you want to predict using a trained model, which can be loaded using `load_model()` method.    
