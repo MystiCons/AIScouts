@@ -6,6 +6,9 @@
 The main challenge of the team is to create a sensor which detects cars on a parking place and counts the free parks.   
 The parking place challenge is done with [Tensorflow](https://www.tensorflow.org/) and Python 3. To create fast prototypes we use [tflearn](http://tflearn.org/) which is a higher-level API for Tensorflow.   
 
+![Parkingplace](https://github.com/MystiCons/AIScouts/blob/master/Images/park.gif?raw=true)    
+Parking place detection in action.   
+
 ---
 
 ## Directories
