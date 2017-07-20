@@ -28,6 +28,7 @@ There's a simple version (rasp_model.py) and full version (model.py).
 The full version uses OpenCV and simple version uses Pillow. Simple version has neither train method nor test methods. 
 The simple version should be used if you only want to load a model and predict, not train it.   
 The model.py also has an implementation of deep convolutional generative adversarial network, which can generate images (bad quality) from your datasets.    
+    
 ![DCGAN](https://github.com/MystiCons/AIScouts/blob/master/Images/DCGAN.gif?raw=true)    
 
 ### [Robotics](https://github.com/MystiCons/AIScouts/tree/master/Robotics)
