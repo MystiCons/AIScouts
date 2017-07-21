@@ -17,7 +17,7 @@ data_folder = "/media/cf2017/levy/tensorflow/parking_place2/"
 
 # DCGAN=True
 mod = Model(paths, data_folder=data_folder,
-            epochs=1, img_size=64, model_name='gen_model',
+            epochs=1000, img_size=48, model_name='gen_model',
             learning_rate=0.0002, DCGAN=True)
 
 # Trains model, mnist dataset built in to do sanity tests

@@ -11,7 +11,7 @@ from random import shuffle
 from tflearn.layers.conv import conv_2d, max_pool_2d, upsample_2d
 from tflearn.layers.core import input_data,  dropout,  fully_connected
 from tflearn.layers.estimator import regression
-from tflearn.datasets import mnist
+from tflearn.datasets import oxflower17, mnist
 import tflearn
 from tflearn.optimizers import Adam
 import tensorflow as tf
@@ -38,7 +38,7 @@ class Model:
     separate_validation_data = False
 
     # DCGAN
-    z_dim = 1000
+    z_dim = 2000
     gen_net = None
     is_dcgan = False
     gen_model = None
@@ -382,28 +382,43 @@ class Model:
             y.axes.get_yaxis().set_visible(False)
         plt.show()
 
-    def DCGAN(self, mnist_data=False):
+    def DCGAN(self, mnist_data=False, oxford_flower=False):
         # Preprocess
-        if not mnist_data:
-            train = self.load_training_data()
-            # i[0] is the image, i[1] the label
-            X = np.array([i[0] for i in train]).reshape(-1, self.img_size, self.img_size, 1)
+        if oxford_flower:
+            X, Y = oxflower17.load_data(one_hot=True, resize_pics=(self.img_size, self.img_size))
         else:
-            X, Y, test_X, test_Y = mnist.load_data()
-            X = X.reshape(-1, 28, 28, 1)
+            if not mnist_data:
+                train = self.load_training_data()
+                # i[0] is the image, i[1] the label
+                X = np.array([i[0] for i in train]).reshape(-1, self.img_size, self.img_size, 1)
+            else:
+                X, Y, test_X, test_Y = mnist.load_data()
+                X = X.reshape(-1, 28, 28, 1)
         preprocessed = []
         for image in tqdm(X):
             dim = (self.img_size, self.img_size)
             img = cv2.resize(image, dim)
-            cv2.normalize(img, img, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+            if oxford_flower:
+                img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+            img = cv2.normalize(img, img, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+            #cv2.imshow('main', img)
+            #cv2.waitKey()
             preprocessed.append(img)
-        X = np.array(preprocessed.copy())
-        X = X.reshape(-1, self.img_size, self.img_size, 1)
+
+        if oxford_flower:
+            X = np.array(preprocessed.copy())
+            for i in range(4):
+                X = np.concatenate((X, np.array(preprocessed.copy())))
+
+        else:
+            X = np.array(preprocessed.copy())
         np.random.shuffle(X)
-
+        X = X.reshape(-1, self.img_size, self.img_size, 1)
         total_samples = len(X)
+        m = np.amax(X)
+        print(m)
 
-        disc_noise = np.random.uniform(0., 1., size=[total_samples, self.z_dim])
+        disc_noise = np.random.normal(0., 1., size=[total_samples, self.z_dim])
         # Prepare target data to feed to the discriminator (0: fake image, 1: real image)
         y_disc_fake = np.zeros(shape=[total_samples])
         y_disc_real = np.ones(shape=[total_samples])
@@ -412,7 +427,7 @@ class Model:
         y_disc_real = tflearn.data_utils.to_categorical(y_disc_real, 2)
 
         # Prepare input data to feed to the stacked generator/discriminator
-        gen_noise = np.random.uniform(0., 1., size=[total_samples, self.z_dim])
+        gen_noise = np.random.normal(0., 1., size=[total_samples, self.z_dim])
         # Prepare target data to feed to the discriminator
         # Generator tries to fool the discriminator, thus target is 1 (e.g. real images)
         y_gen = np.ones(shape=[total_samples])
@@ -430,7 +445,7 @@ class Model:
                            'target_disc_fake': y_disc_fake,
                            'target_disc_real': y_disc_real},
                             n_epoch=self.epochs, show_metric=True,
-                            shuffle=False, snapshot_epoch=True, run_id=self.model_name,
+                            shuffle=True, run_id=self.model_name,
                             callbacks=visual_callback) #logger_callback])
 
         self.save_model()
@@ -439,9 +454,11 @@ class Model:
         # for testing (re-using same session to re-use the weights learnt).
 
 
+
     def build_DCGAN(self):
         gen_input = input_data(shape=[None, self.z_dim], name='input_gen_noise')
         input_disc_noise = input_data(shape=[None, self.z_dim], name='input_disc_noise')
+
         input_disc_real = input_data(shape=[None, self.img_size, self.img_size, 1], name='input_disc_real')
 
         disc_fake = self.discriminator(self.generator(input_disc_noise))
@@ -456,26 +473,28 @@ class Model:
         disc_target = tflearn.multi_target_data(['target_disc_fake', 'target_disc_real'],
                                                 shape=[None, 2])
 
-        adam = Adam(learning_rate=self.learning_rate, beta1=0.8)
+        adam = Adam(learning_rate=self.learning_rate, beta1=0.9)
         disc_model = regression(disc_net, optimizer=adam,
                                 placeholder=disc_target,
                                 loss='categorical_crossentropy',
                                 trainable_vars=disc_vars,
-                                name='target_disc', batch_size=self.img_size,
+                                name='target_disc', batch_size=64,
                                 op_name='DISC')
 
         gen_vars = tflearn.get_layer_variables_by_scope('Generator')
         gan_model = regression(stacked_gan_net, optimizer=adam,
                                loss='categorical_crossentropy',
                                trainable_vars=gen_vars,
-                               name='target_gen', batch_size=self.img_size,
+                               name='target_gen', batch_size=64,
                                op_name='GEN')
 
         self.model = tflearn.DNN(gan_model, tensorboard_dir='log',
                           checkpoint_path=self.data_folder + 'checkpoints/' + self.model_name + '/')
         self.gen_net = gen_net
 
-
+    def noise_layer(self, inp, std):
+        noise = tf.random_normal(shape=tf.shape(inp), mean=0.0, stddev=std, dtype=tf.float32)
+        return inp + noise
     # Generator
     def generator(self, x, reuse=False):
         s = self.img_size
@@ -485,14 +504,18 @@ class Model:
         s16 = self.divide(s8, 2)
 
         with tf.variable_scope('Generator', reuse=reuse):
-            x = tflearn.fully_connected(x, s8 * s8 * 512)
+            x = tflearn.fully_connected(x, s16 * s16 * 256)
+            x = tf.reshape(x, shape=[-1, s16, s16, 256])
+            x = tflearn.dropout(x, 0.8)
             x = tflearn.batch_normalization(x)
-            x = tf.reshape(x, shape=[-1, s8, s8, 512])
-            x = tflearn.dropout(x, 0.5)
+            x = tflearn.conv_2d_transpose(x, 128, 5, [s8, s8], strides=[2, 2], activation='relu')
+            self.noise_layer(x, 0.2)
             x = tflearn.batch_normalization(x)
             x = tflearn.conv_2d_transpose(x, 64, 5, [s4, s4], strides=[2, 2], activation='relu')
+            self.noise_layer(x, 0.2)
             x = tflearn.batch_normalization(x)
             x = tflearn.conv_2d_transpose(x, 32, 5, [s2, s2], strides=[2, 2], activation='relu')
+            self.noise_layer(x, 0.2)
             x = tflearn.batch_normalization(x)
             x = tflearn.conv_2d_transpose(x, 1, 2, [s, s], strides=[2, 2], activation='relu')
             return tf.nn.tanh(x)
@@ -500,10 +523,11 @@ class Model:
     # Discriminator
     def discriminator(self, x, reuse=False):
         with tf.variable_scope('Discriminator', reuse=reuse):
-            x = tflearn.conv_2d(x, 16, 2, activation='relu')
+            #self.noise_layer(x, 0.2)
+            x = tflearn.conv_2d(x, 64, 2, activation='relu')
             x = tflearn.avg_pool_2d(x, 2)
             # x = tflearn.batch_normalization(x)
-            x = tflearn.conv_2d(x, 32, 2, activation='relu')
+            x = tflearn.conv_2d(x, 128, 2, activation='relu')
             x = tflearn.avg_pool_2d(x, 2)
             # x = tflearn.batch_normalization(x)
             x = tflearn.conv_2d(x, 64, 2, activation='relu')
@@ -530,26 +554,37 @@ class Visual_CallBack(tflearn.callbacks.Callback):
     image_count = 0
     images_row = 0
     img_size = 0
-    def __init__(self, gen_net, img_count=1, img_size=64):
+    def __init__(self, gen_net, img_count=10, img_size=64):
         self.gen_net = gen_net
-        self.z = np.random.uniform(0., 1., size=[img_count, 1000])
+        # Noise input.
+        self.z = np.random.normal(0., 1., size=[int(img_count / 2), 2000])
         self.image_count = img_count
         self.images_row = int(math.floor(math.sqrt(img_count)))
         self.img_size = img_size
         self.gen = tflearn.DNN(self.gen_net, session=tf.get_default_session())
 
     def on_batch_end(self, training_state, snapshot):
-        # Noise input.
+        _z = np.random.normal(0., 1., size=[int(self.image_count / 2), 2000])
         images = np.array(self.gen.predict({'input_gen_noise': self.z}))
+        images2 = np.array(self.gen.predict({'input_gen_noise': _z}))
+        images = np.concatenate((images, images2))
         images = denormalize_image(images)
-        new_im = np.vstack(([(np.hstack(([images[i * j] for i in range(self.images_row)]))) for j in range(self.images_row)]))
+        new_im = np.hstack([images[i] for i in range(self.image_count)])
         cv2.imshow("main", new_im)
         cv2.waitKey(1)
-        #dirlen = len(os.listdir('/media/cf2017/levy/tensorflow/DCGAN/time_lapse/'))
-        #cv2.imwrite('/media/cf2017/levy/tensorflow/DCGAN/time_lapse/' + str(dirlen) + '.bmp', new_im)
+        dirlen = len(os.listdir('/media/cf2017/levy/tensorflow/DCGAN/time_lapse5/'))
+        cv2.imwrite('/media/cf2017/levy/tensorflow/DCGAN/time_lapse5/' + str(dirlen) + '.bmp', new_im)
+
+    def on_epoch_end(self, training_state):
+
+        images = np.array(self.gen.predict({'input_gen_noise': self.z}))
+        images = denormalize_image(images)
+        new_im = np.hstack([images[i] for i in range(int(self.image_count / 2))])
+        dirlen = len(os.listdir('/media/cf2017/levy/tensorflow/DCGAN/time_lapse4/'))
+        cv2.imwrite('/media/cf2017/levy/tensorflow/DCGAN/time_lapse4/' + str(dirlen) + '.bmp', new_im)
 
 
 
 def denormalize_image(images):
-    return np.array([x * 255 for x in images], dtype='uint8')
+    return np.array([(x) * 255 for x in images], dtype='uint8')
 
