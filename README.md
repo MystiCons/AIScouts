@@ -29,7 +29,7 @@ The full version uses OpenCV and simple version uses Pillow. Simple version has 
 The simple version should be used if you only want to load a model and predict, not train it.   
 The model.py also has an implementation of deep convolutional generative adversarial network, which can generate images (bad quality) from your datasets.    
     
-![DCGAN](https://github.com/MystiCons/AIScouts/blob/master/Images/DCGAN.gif?raw=true)    
+![DCGAN](https://github.com/MystiCons/AIScouts/blob/master/Images/cars.gif?raw=true)    
 
 ### [Robotics](https://github.com/MystiCons/AIScouts/tree/master/Robotics)
 Robotics directory has BB-8 (Sphero) toy robots control scripts and a custom robot (Raspberry Pi) control script.   
