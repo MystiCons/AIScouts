@@ -4,7 +4,7 @@ SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.
 sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
 import cv2
 import numpy as np
-import DeepLearning.rasp_model
+import MachineLearning.rasp_model
 
 class MotionDetection:
 

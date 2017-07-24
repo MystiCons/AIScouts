@@ -20,7 +20,7 @@ import threading
 camera = Camera()
 detector = MotionDetection(256)
 
-#mod = Model.load_model("/home/pi/dev/MotionDetection/DeepLearning/models/wimmalab")
+#mod = Model.load_model("/home/pi/dev/MotionDetection/MachineLearning/models/wimmalab")
 
 server = StreamServer()
 server_thread = threading.Thread(target=server.start)

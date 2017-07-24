@@ -14,7 +14,7 @@ import tkinter
 import pickle
 
 import numpy as np
-from DeepLearning.rasp_model import Model
+from MachineLearning.rasp_model import Model
 
 
 try:
@@ -435,7 +435,7 @@ class Client:
 
 
 def main():
-    mod = Model.load_model("/home/cf2017/PycharmProjects/AIScouts/AIScouts/DeepLearning/models/park_model22")
+    mod = Model.load_model("/home/cf2017/PycharmProjects/AIScouts/AIScouts/MachineLearning/models/park_model22")
     client = Client(model=mod)
     client.run_tk()
 

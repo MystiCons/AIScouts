@@ -16,7 +16,7 @@ from MotionDetection.Detection import MotionDetection
 from IPCameraVersion.rasp_ip_camera import IpCamera
 
 import numpy as np
-from DeepLearning.rasp_model import Model
+from MachineLearning.rasp_model import Model
 
 
 try:
@@ -383,7 +383,7 @@ class Client:
 
 
 def main():
-    #mod = Model.load_model("/home/cf2017/PycharmProjects/AIScouts/AIScouts/DeepLearning/models/park_model22")
+    #mod = Model.load_model("/home/cf2017/PycharmProjects/AIScouts/AIScouts/MachineLearning/models/park_model22")
     client = Client()
     client.run_tk()
 

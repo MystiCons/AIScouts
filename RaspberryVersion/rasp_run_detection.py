@@ -6,7 +6,7 @@ import os
 PACKAGE_PARENT = '..'
 SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__))))
 sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
-from DeepLearning.rasp_model import Model
+from MachineLearning.rasp_model import Model
 from RaspberryVersion.rasp_find_objects_from_image import ObjectRecognition
 from RaspberryVersion.Camera import Camera
 from RaspberryVersion.stream_server import StreamServer
@@ -38,7 +38,7 @@ try:
                                       data=json.dumps({'vpnAddress': ip2}))
     file.write('\nSend Ips')
     #print(ip)
-    mod = Model.load_model("/home/pi/dev/AIScouts/DeepLearning/models/park_model22")
+    mod = Model.load_model("/home/pi/dev/AIScouts/MachineLearning/models/park_model22")
     file.write('\nLoaded model')
     interesting_labels = ['Car', 'Park']
     objectrec = ObjectRecognition(mod, interesting_labels, auto_find=False, visualize=False)
