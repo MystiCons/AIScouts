@@ -5,6 +5,14 @@
 **AIScouts** is a team of two members, who try to map the possibilities of machine learning and computer vision.   
 The main challenge of the team is to create a sensor which detects cars on a parking place and counts the free parks.   
 The parking place challenge is done with [Tensorflow](https://www.tensorflow.org/) and Python 3. To create fast prototypes we use [tflearn](http://tflearn.org/) which is a higher-level API for Tensorflow.   
+The project is part of [Wimma lab](https://wimmalab.github.io/) at JAMK University of Applied Sciences.   
+<i class="fa fa-linkedin-square" aria-hidden="true"></i>
+| Team members: | | |
+|:--:|:--:|:--:|  
+| Eppu Heilimo | [![Github](https://assets-cdn.github.com/favicon.ico)](https://github.com/EppuHeilimo) | [![Linkedin](http://s2.freebeacon.com/thm/freebeacon/images/icons/large/linkedin.png)](https://github.com/EppuHeilimo) |
+| Toni Tanninen | [![Github](https://assets-cdn.github.com/favicon.ico)](https://github.com/tonitanninen) | [![Github](https://assets-cdn.github.com/favicon.ico)](https://github.com/EppuHeilimo) |
+
+
 
 Parking place detection in action.   
 ![Parkingplace](https://github.com/MystiCons/AIScouts/blob/master/Images/park.gif?raw=true)    
