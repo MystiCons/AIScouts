@@ -5,7 +5,8 @@ This folder has all the code containing machine learning techniques used in the 
 These files describe a neural network and it's parameters.   
 Rasp_model is a simple version of model.py. The simple version can't train the model or test the model, it should be used only if you want to predict using a trained model, which can be loaded using `load_model()` method.    
 The full version `model.py` can be used to train a model from any images. The images should be put into a folder named by the label you want.  
-`model.py` also has an implementation of deep convolutional generative adversarial neural network, which is capable of generating new images from a dataset. You can find an example [here](generate_images.py). 
+`model.py` also has an implementation of deep convolutional generative adversarial neural network, which is capable of generating new images from a dataset. You can find an example [here](generate_images.py).    
+DCGAN during training: ![DCGAN](https://github.com/MystiCons/AIScouts/blob/master/Images/cars.gif?raw=true)   
 
 Example how to train a new model: 
 ```

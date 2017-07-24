@@ -16,8 +16,6 @@ import tflearn
 from tflearn.optimizers import Adam
 import tensorflow as tf
 import math
-from PIL import Image
-
 
 # Represents a convolutional neural network
 class Model:
@@ -73,7 +71,7 @@ class Model:
 
     def conv_nn(self):
         convnet = input_data(shape=[None, self.img_size, self.img_size, self.image_channels], name='input')
-
+        # TODO given layers are currently x2 the given layer amount
         for _ in range(self.layers):
             convnet = conv_2d(convnet, 32, 2, activation='relu')
             convnet = max_pool_2d(convnet, 2)
