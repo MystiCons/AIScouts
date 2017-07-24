@@ -10,10 +10,8 @@ The project is part of [Wimma lab](https://wimmalab.github.io/) at JAMK Universi
 ### Team members
 | Name | Area of expertise | Github | Linkedin | 
 |:--:|:--:|:--:|:--:|  
-| Eppu Heilimo | Programming | [![Github](https://github.com/MystiCons/AIScouts/blob/master/Images/github-mark.png?raw=true)](https://github.com/EppuHeilimo) | [![Linkedin](https://github.com/MystiCons/AIScouts/blob/master/Images/linkedin.png?raw=true)](https://github.com/EppuHeilimo) |
-| Toni Tanninen | IoT, Data gathering | [![Github](https://github.com/MystiCons/AIScouts/blob/master/Images/github-mark.png?raw=true)](https://github.com/tonitanninen) | [![Github](https://github.com/MystiCons/AIScouts/blob/master/Images/linkedin.png?raw=true)](https://github.com/EppuHeilimo) |
-
-
+| Eppu Heilimo | Programming | [![Github](https://github.com/MystiCons/AIScouts/blob/master/Images/github-mark.png?raw=true)](https://github.com/EppuHeilimo) | [![Linkedin](https://github.com/MystiCons/AIScouts/blob/master/Images/linkedin.png?raw=true)](https://www.linkedin.com/in/Eppu-heilimo/) |
+| Toni Tanninen | IoT | [![Github](https://github.com/MystiCons/AIScouts/blob/master/Images/github-mark.png?raw=true)](https://github.com/tonitanninen) | [![Github](https://github.com/MystiCons/AIScouts/blob/master/Images/linkedin.png?raw=true)](https://www.linkedin.com/in/toni-tanninen-161262144/) |
 
 Parking place detection in action.   
 ![Parkingplace](https://github.com/MystiCons/AIScouts/blob/master/Images/park.gif?raw=true)    
