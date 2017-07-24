@@ -6,11 +6,12 @@
 The main challenge of the team is to create a sensor which detects cars on a parking place and counts the free parks.   
 The parking place challenge is done with [Tensorflow](https://www.tensorflow.org/) and Python 3. To create fast prototypes we use [tflearn](http://tflearn.org/) which is a higher-level API for Tensorflow.   
 The project is part of [Wimma lab](https://wimmalab.github.io/) at JAMK University of Applied Sciences.   
-
-| Team members: | | |
-|:--:|:--:|:--:|  
-| Eppu Heilimo | [![Github](https://assets-cdn.github.com/favicon.ico)](https://github.com/EppuHeilimo) | [![Linkedin](http://s2.freebeacon.com/thm/freebeacon/images/icons/large/linkedin.png)](https://github.com/EppuHeilimo) |
-| Toni Tanninen | [![Github](https://assets-cdn.github.com/favicon.ico)](https://github.com/tonitanninen) | [![Github](https://assets-cdn.github.com/favicon.ico)](https://github.com/EppuHeilimo) |
+    
+### Team members
+| Name | Area of expertise | Github | Linkedin | 
+|:--:|:--:|:--:|:--:|  
+| Eppu Heilimo | Programming | [![Github](https://github.com/MystiCons/AIScouts/blob/master/Images/github-mark.png?raw=true)](https://github.com/EppuHeilimo) | [![Linkedin](https://github.com/MystiCons/AIScouts/blob/master/Images/linkedin.png?raw=true)](https://github.com/EppuHeilimo) |
+| Toni Tanninen | IoT, Data gathering | [![Github](https://github.com/MystiCons/AIScouts/blob/master/Images/github-mark.png?raw=true)](https://github.com/tonitanninen) | [![Github](https://github.com/MystiCons/AIScouts/blob/master/Images/linkedin.png?raw=true)](https://github.com/EppuHeilimo) |
 
 
 
