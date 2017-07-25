@@ -14,7 +14,9 @@ The project is part of [Wimma lab](https://wimmalab.github.io/) at JAMK Universi
 | Toni Tanninen | IoT | [![Github](https://github.com/MystiCons/AIScouts/blob/master/Images/github-mark.png?raw=true)](https://github.com/tonitanninen) | [![Github](https://github.com/MystiCons/AIScouts/blob/master/Images/linkedin.png?raw=true)](https://www.linkedin.com/in/toni-tanninen-161262144/) |
 
 Parking place detection in action.   
-![Parkingplace](https://github.com/MystiCons/AIScouts/blob/master/Images/park.gif?raw=true)    
+![Parkingplace](https://github.com/MystiCons/AIScouts/blob/master/Images/park.gif?raw=true)  
+
+**More documentations in the [Wiki](https://github.com/MystiCons/AIScouts/wiki) and in the repository directories.**   
 
 ---
 

@@ -7,14 +7,14 @@ The `ipcamera_park_detection.py` script also sends the data to thingsboard using
 
 Dependancies:    
  * OpenCV 2
- * DeepLearning.Model (In this repository)
+ * MachineLearning.Model (In this repository)
  * tqdm
- * matplotlib
+ * matplotlib (v2.0.2)
  * JSON
  * Pickle
 
 ## find_objects_from_image.py
-This module contains a class called ObjectRecognition which uses DeepLearning.Model to predict crops from an image.   
+This module contains a class called ObjectRecognition which uses MachineLearning.Model to predict crops from an image.   
 
 When `find_objects(img)` is called, the script will allow the user to draw crops on the image which will be used as static crop positions which will be predicted on every image after the drawing. The crop positions can be saved to .poi file by calling `ObjectRecognition.save_poi('path/name')` and loaded with `ObjectRecognition.load_poi('path/name')`    
 

@@ -34,6 +34,8 @@ class Model:
     labels = {}
     shuffle = False
     separate_validation_data = False
+    batch_size = 64
+    beta = 0.99
 
     # DCGAN
     z_dim = 2000
@@ -44,7 +46,7 @@ class Model:
 
     def __init__(self, label_folders, data_folder='./',
                    learning_rate=1e-3, img_size=128, layers=4,
-                   epochs=10, image_channels=1, model_name='', DCGAN=False):
+                   epochs=10, image_channels=1, model_name='', DCGAN=False, beta=0.99, batch_size=64):
         if model_name == '':
             model_name = 'L' + str(layers) + 'R' + str(learning_rate) + 'E' + str(epochs)
         self.label_folders = label_folders
@@ -57,6 +59,8 @@ class Model:
         self.data_folder = data_folder
         self.image_channels = image_channels
         self.is_dcgan = DCGAN
+        self.batch_size = batch_size
+        self.beta = beta
 
         if not self.data_folder[-1] == '/':
             self.data_folder += '/'
@@ -81,10 +85,10 @@ class Model:
 
         convnet = fully_connected(convnet, 1024, activation='relu')
         convnet = dropout(convnet, 0.5)
-
+        adam = Adam(learning_rate=self.learning_rate, beta1=self.beta)
         convnet = fully_connected(convnet, len(self.label_folders), activation='softmax')
-        convnet = regression(convnet, optimizer='Adam', shuffle_batches=False, learning_rate=self.learning_rate,
-                             loss='categorical_crossentropy',
+        convnet = regression(convnet, optimizer=adam, shuffle_batches=False, learning_rate=self.learning_rate,
+                             loss='categorical_crossentropy', batch_size=self.batch_size,
                              name='targets')
 
         if not os.path.isdir(self.data_folder + 'checkpoints/' + self.model_name + '/'):
@@ -104,7 +108,8 @@ class Model:
         mod = cls(dict['label_folders'], data_folder=dict['data_folder'],
                    learning_rate=dict['learning_rate'],
                    img_size=dict['img_size'],layers=dict['layers'],
-                    epochs=dict['epochs'], model_name=dict['model_name'], DCGAN=dict['is_dcgan'])
+                    epochs=dict['epochs'], model_name=dict['model_name'], DCGAN=dict['is_dcgan'],
+                  batch_size=dict['batch_size'], beta=dict['beta'])
         if os.path.exists(path + '.meta'):
             mod.model.load(path)
             print('model loaded!')
@@ -355,7 +360,7 @@ class Model:
         return self.labels[index], round(out[index], 3)
 
     def predict_DCGAN(self, noise):
-        out = np.array(self.gen_model.predict({'input_gen_noise': noise}))
+        out = np.array(self.model.predict({'input_gen_noise': noise}))
         return out
 
     def test_model(self, path='test_data/'):
@@ -446,8 +451,9 @@ class Model:
                             shuffle=True, run_id=self.model_name,
                             callbacks=visual_callback) #logger_callback])
 
+
+        self.model = tflearn.DNN(self.gen_net, session=self.model.session)
         self.save_model()
-        self.gen_model = tflearn.DNN(self.gen_net, session=self.model.session)
         # Create another model from the generator graph to generate some samples
         # for testing (re-using same session to re-use the weights learnt).
 
@@ -471,19 +477,19 @@ class Model:
         disc_target = tflearn.multi_target_data(['target_disc_fake', 'target_disc_real'],
                                                 shape=[None, 2])
 
-        adam = Adam(learning_rate=self.learning_rate, beta1=0.9)
+        adam = Adam(learning_rate=self.learning_rate, beta1=self.beta)
         disc_model = regression(disc_net, optimizer=adam,
                                 placeholder=disc_target,
                                 loss='categorical_crossentropy',
                                 trainable_vars=disc_vars,
-                                name='target_disc', batch_size=64,
+                                name='target_disc', batch_size=self.batch_size,
                                 op_name='DISC')
 
         gen_vars = tflearn.get_layer_variables_by_scope('Generator')
         gan_model = regression(stacked_gan_net, optimizer=adam,
                                loss='categorical_crossentropy',
                                trainable_vars=gen_vars,
-                               name='target_gen', batch_size=64,
+                               name='target_gen', batch_size=self.batch_size,
                                op_name='GEN')
 
         self.model = tflearn.DNN(gan_model, tensorboard_dir='log',
@@ -502,20 +508,20 @@ class Model:
         s16 = self.divide(s8, 2)
 
         with tf.variable_scope('Generator', reuse=reuse):
-            x = tflearn.fully_connected(x, s16 * s16 * 256)
-            x = tf.reshape(x, shape=[-1, s16, s16, 256])
+            x = tflearn.fully_connected(x, s16 * s16 * 512)
+            x = tf.reshape(x, shape=[-1, s16, s16, 512])
             x = tflearn.dropout(x, 0.8)
             x = tflearn.batch_normalization(x)
-            x = tflearn.conv_2d_transpose(x, 128, 5, [s8, s8], strides=[2, 2], activation='relu')
+            x = tflearn.conv_2d_transpose(x, 128, 5, [s8, s8], strides=[2, 2], activation='LeakyReLu')
             self.noise_layer(x, 0.2)
             x = tflearn.batch_normalization(x)
-            x = tflearn.conv_2d_transpose(x, 64, 5, [s4, s4], strides=[2, 2], activation='relu')
+            x = tflearn.conv_2d_transpose(x, 64, 5, [s4, s4], strides=[2, 2], activation='LeakyReLu')
             self.noise_layer(x, 0.2)
             x = tflearn.batch_normalization(x)
-            x = tflearn.conv_2d_transpose(x, 32, 5, [s2, s2], strides=[2, 2], activation='relu')
+            x = tflearn.conv_2d_transpose(x, 32, 5, [s2, s2], strides=[2, 2], activation='LeakyReLu')
             self.noise_layer(x, 0.2)
             x = tflearn.batch_normalization(x)
-            x = tflearn.conv_2d_transpose(x, 1, 2, [s, s], strides=[2, 2], activation='relu')
+            x = tflearn.conv_2d_transpose(x, 1, 2, [s, s], strides=[2, 2], activation='LeakyReLu')
             return tf.nn.tanh(x)
 
     # Discriminator
@@ -535,7 +541,7 @@ class Model:
             x = tflearn.avg_pool_2d(x, 2)
             # x = tflearn.batch_normalization(x)
             x = tflearn.fully_connected(x, 1024, activation='relu')
-            x = tflearn.dropout(x, 0.8)
+            #x = tflearn.dropout(x, 0.8)
             x = tflearn.fully_connected(x, 2, activation='softmax')
             return x
 
@@ -570,16 +576,16 @@ class Visual_CallBack(tflearn.callbacks.Callback):
         new_im = np.hstack([images[i] for i in range(self.image_count)])
         cv2.imshow("main", new_im)
         cv2.waitKey(1)
-        dirlen = len(os.listdir('/media/cf2017/levy/tensorflow/DCGAN/time_lapse5/'))
-        cv2.imwrite('/media/cf2017/levy/tensorflow/DCGAN/time_lapse5/' + str(dirlen) + '.bmp', new_im)
+        dirlen = len(os.listdir('/media/cf2017/levy/tensorflow/DCGAN/time_lapse9/'))
+        cv2.imwrite('/media/cf2017/levy/tensorflow/DCGAN/time_lapse9/' + str(dirlen) + '.bmp', new_im)
 
     def on_epoch_end(self, training_state):
 
         images = np.array(self.gen.predict({'input_gen_noise': self.z}))
         images = denormalize_image(images)
         new_im = np.hstack([images[i] for i in range(int(self.image_count / 2))])
-        dirlen = len(os.listdir('/media/cf2017/levy/tensorflow/DCGAN/time_lapse4/'))
-        cv2.imwrite('/media/cf2017/levy/tensorflow/DCGAN/time_lapse4/' + str(dirlen) + '.bmp', new_im)
+        dirlen = len(os.listdir('/media/cf2017/levy/tensorflow/DCGAN/time_lapse8/'))
+        cv2.imwrite('/media/cf2017/levy/tensorflow/DCGAN/time_lapse8/' + str(dirlen) + '.bmp', new_im)
 
 
 

@@ -12,6 +12,15 @@ The first five images use the same random noise as an input for generator. Which
 The last five use a new random noise for every batch, which means the image will always be a new random image.   
 You can find this example [here](generate_images.py).    
 
+Dependancies:    
+ * Python 3+   
+ * tqdm   
+ * matplotlib (v2.0.2)   
+ * Pickle   
+ * Opencv 2 (1.20v)
+ * TFlearn   
+ * Tensorflow v1.0+ (GPU-version recommended)
+
 Example how to train a new convolutional neural network model: 
 ```
 from MachineLearning.model import Model
