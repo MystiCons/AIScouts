@@ -512,22 +512,22 @@ class Model:
             x = tf.reshape(x, shape=[-1, s16, s16, 512])
             x = tflearn.dropout(x, 0.8)
             x = tflearn.batch_normalization(x)
-            x = tflearn.conv_2d_transpose(x, 128, 5, [s8, s8], strides=[2, 2], activation='LeakyReLu')
+            x = tflearn.conv_2d_transpose(x, 128, 5, [s8, s8], strides=[2, 2], activation='relu')
             self.noise_layer(x, 0.2)
             x = tflearn.batch_normalization(x)
-            x = tflearn.conv_2d_transpose(x, 64, 5, [s4, s4], strides=[2, 2], activation='LeakyReLu')
+            x = tflearn.conv_2d_transpose(x, 64, 5, [s4, s4], strides=[2, 2], activation='relu')
             self.noise_layer(x, 0.2)
             x = tflearn.batch_normalization(x)
-            x = tflearn.conv_2d_transpose(x, 32, 5, [s2, s2], strides=[2, 2], activation='LeakyReLu')
+            x = tflearn.conv_2d_transpose(x, 32, 5, [s2, s2], strides=[2, 2], activation='relu')
             self.noise_layer(x, 0.2)
             x = tflearn.batch_normalization(x)
-            x = tflearn.conv_2d_transpose(x, 1, 2, [s, s], strides=[2, 2], activation='LeakyReLu')
+            x = tflearn.conv_2d_transpose(x, 1, 2, [s, s], strides=[2, 2], activation='relu')
             return tf.nn.tanh(x)
 
     # Discriminator
     def discriminator(self, x, reuse=False):
         with tf.variable_scope('Discriminator', reuse=reuse):
-            #self.noise_layer(x, 0.2)
+            self.noise_layer(x, 0.1)
             x = tflearn.conv_2d(x, 64, 2, activation='relu')
             x = tflearn.avg_pool_2d(x, 2)
             # x = tflearn.batch_normalization(x)
@@ -541,7 +541,7 @@ class Model:
             x = tflearn.avg_pool_2d(x, 2)
             # x = tflearn.batch_normalization(x)
             x = tflearn.fully_connected(x, 1024, activation='relu')
-            #x = tflearn.dropout(x, 0.8)
+            x = tflearn.dropout(x, 0.8)
             x = tflearn.fully_connected(x, 2, activation='softmax')
             return x
 
