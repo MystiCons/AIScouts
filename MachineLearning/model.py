@@ -452,8 +452,9 @@ class Model:
                             callbacks=visual_callback) #logger_callback])
 
 
-        self.model = tflearn.DNN(self.gen_net, session=self.model.session)
+
         self.save_model()
+        self.gen_model = tflearn.DNN(self.gen_net, session=self.model.session)
         # Create another model from the generator graph to generate some samples
         # for testing (re-using same session to re-use the weights learnt).
 
@@ -503,6 +504,7 @@ class Model:
     def generator(self, x, reuse=False):
         s = self.img_size
         s2 = self.divide(s, 2)
+
         s4 = self.divide(s2, 2)
         s8 = self.divide(s4, 2)
         s16 = self.divide(s8, 2)
@@ -527,7 +529,7 @@ class Model:
     # Discriminator
     def discriminator(self, x, reuse=False):
         with tf.variable_scope('Discriminator', reuse=reuse):
-            self.noise_layer(x, 0.1)
+            #self.noise_layer(x, 0.1)
             x = tflearn.conv_2d(x, 64, 2, activation='relu')
             x = tflearn.avg_pool_2d(x, 2)
             # x = tflearn.batch_normalization(x)
